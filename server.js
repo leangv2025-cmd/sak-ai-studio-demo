@@ -8,29 +8,33 @@ app.use(express.static(__dirname));
 const API_KEY = process.env.GEMINI_KEY;
 
 app.post("/chat", async (req, res) => {
-  const userMessage = req.body.message;
+  const userMessage = (req.body?.message || "").trim();
+  if (!userMessage) return res.json({ reply: "Please type a message." });
 
   try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" +
-        API_KEY,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userMessage }] }],
-        }),
-      }
-    );
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+      process.env.GEMINI_KEY;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: userMessage }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 256 }
+      }),
+    });
 
     const data = await response.json();
+
     const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data?.candidates?.[0]?.content?.parts?.map(p => p.text).join("") ||
+      data?.error?.message ||
       "No response";
 
-    res.json({ reply });
+    return res.json({ reply });
   } catch (error) {
-    res.json({ reply: "Error connecting AI" });
+    return res.json({ reply: "Server error: " + error.message });
   }
 });
 
