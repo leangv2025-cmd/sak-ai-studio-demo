@@ -1,82 +1,271 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SAK AI Studio Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body{
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background:#0f172a;
       color:white;
       text-align:center;
-      padding:40px;
+      padding:40px 18px;
     }
+    h1{ margin-top: 10px; }
+    .sub{ opacity: .85; margin-top: 8px; }
+
     .box{
       background:#111827;
       padding:20px;
-      margin:20px;
-      border-radius:12px;
+      margin:22px auto;
+      border-radius:14px;
+      max-width: 520px;
     }
+
     input, textarea{
-      width:80%;
-      padding:10px;
-      margin:10px;
+      width: min(420px, 92%);
+      padding:12px;
+      margin:10px 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.15);
+      color: #fff;
+      outline: none;
     }
+
     button{
       padding:12px 20px;
       background:#6366f1;
       color:white;
       border:none;
-      border-radius:8px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .hint{ opacity:.7; margin-top: 10px; font-size: 13px; }
+
+    /* --- Chat FAB --- */
+    #chatFab{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #6366f1;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      z-index: 9999;
+    }
+
+    /* --- Popup --- */
+    .chat-popup{
+      position: fixed;
+      right: 18px;
+      bottom: 86px;
+      width: min(360px, calc(100vw - 36px));
+      height: 520px;
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.5);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      text-align: left;
+    }
+    .chat-popup.open{ display:flex; }
+
+    .chat-header{
+      padding: 14px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .chat-title{ font-weight: 700; font-size: 16px; color:#fff; }
+    .chat-subtitle{ font-size: 12px; color: rgba(255,255,255,.65); margin-top:2px; }
+
+    .chat-close{
+      border:none;
+      background: transparent;
+      color:#fff;
+      font-size: 18px;
+      cursor:pointer;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    .chat-close:active{ transform: scale(.98); }
+
+    .chat-messages{
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    .msg{ margin: 10px 0; display:flex; }
+    .msg.you{ justify-content:flex-end; }
+    .bubble{
+      max-width: 78%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      line-height: 1.25;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .msg.you .bubble{
+      background:#6366f1;
+      color:#fff;
+      border-bottom-right-radius: 6px;
+    }
+    .msg.ai .bubble{
+      background: rgba(255,255,255,.07);
+      color:#fff;
+      border-bottom-left-radius: 6px;
+    }
+
+    .chat-input-row{
+      display:flex;
+      gap:10px;
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .chat-input{
+      flex:1;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.15);
+      color:#fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      margin: 0;
+    }
+    .chat-send{
+      border:none;
+      background:#6366f1;
+      color:#fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
     }
   </style>
 </head>
+
 <body>
+  <h1>SAK AI Studio Demo</h1>
+  <div class="sub">AI Platform for Voice, Chat & Image</div>
 
-<h1>SAK AI Studio Demo</h1>
-<p>AI Platform for Voice, Chat & Image</p>
+  <div class="box">
+    <h2>Voice AI (TTS)</h2>
+    <textarea id="ttsText" rows="3" placeholder="Enter text for voice..."></textarea><br />
+    <button onclick="alert('TTS will be connected next.')">Generate Voice</button>
+    <div class="hint">Coming next: real TTS output + audio player.</div>
+  </div>
 
-<div class="box">
-<h2>AI Assistant</h2>
-<input id="chatInput" placeholder="Type a message...">
-<button onclick="sendMessage()">Send</button>
+  <div class="box">
+    <h2>Image Generator</h2>
+    <input id="imgPrompt" placeholder="Describe an image..." /><br />
+    <button onclick="alert('Image generation will be connected next.')">Generate Image</button>
+    <div class="hint">Coming next: prompt → generated image preview.</div>
+  </div>
 
-<div id="chatBox" style="margin-top:20px;"></div>
+  <!-- Floating Chat Button -->
+  <button id="chatFab" aria-label="Open chat">💬</button>
 
-<script>
-async function sendMessage() {
-  const input = document.getElementById("chatInput").value;
-  const chatBox = document.getElementById("chatBox");
+  <!-- Chat Popup -->
+  <div id="chatPopup" class="chat-popup" aria-hidden="true">
+    <div class="chat-header">
+      <div>
+        <div class="chat-title">AI Assistant</div>
+        <div class="chat-subtitle">SAK AI Studio</div>
+      </div>
+      <button id="chatClose" class="chat-close" aria-label="Close chat">✕</button>
+    </div>
 
-  chatBox.innerHTML += "<p><b>You:</b> " + input + "</p>";
+    <div id="chatMessages" class="chat-messages"></div>
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({message: input})
-  });
+    <div class="chat-input-row">
+      <input id="chatInput" class="chat-input" placeholder="Type a message..." />
+      <button id="chatSend" class="chat-send">Send</button>
+    </div>
+  </div>
 
-  const data = await res.json();
+  <script>
+    const fab = document.getElementById("chatFab");
+    const popup = document.getElementById("chatPopup");
+    const closeBtn = document.getElementById("chatClose");
+    const sendBtn = document.getElementById("chatSend");
+    const input = document.getElementById("chatInput");
+    const messages = document.getElementById("chatMessages");
 
-  chatBox.innerHTML += "<p><b>AI:</b> " + data.reply + "</p>";
-}
-</script>
-</div>
+    function openChat(){
+      popup.classList.add("open");
+      popup.setAttribute("aria-hidden","false");
+      if(messages.children.length === 0){
+        addMsg("Hi! I’m your SAK AI Studio assistant. Ask me anything.", "ai");
+      }
+      input.focus();
+    }
+    function closeChat(){
+      popup.classList.remove("open");
+      popup.setAttribute("aria-hidden","true");
+    }
 
-<div class="box">
-<h2>Voice AI</h2>
-<textarea placeholder="Enter text for voice"></textarea>
-<br>
-<button>Generate Voice</button>
-<p>(Demo UI only)</p>
-</div>
+    fab.addEventListener("click", openChat);
+    closeBtn.addEventListener("click", closeChat);
 
-<div class="box">
-<h2>Image Generator</h2>
-<input placeholder="Describe image">
-<button>Generate Image</button>
-<p>(Demo UI only)</p>
-</div>
+    function addMsg(text, who){
+      const row = document.createElement("div");
+      row.className = "msg " + who;
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      messages.appendChild(row);
+      messages.scrollTop = messages.scrollHeight;
+    }
 
+    async function sendMessage(){
+      const text = input.value.trim();
+      if(!text) return;
+
+      addMsg(text, "you");
+      input.value = "";
+
+      // typing indicator
+      const typingRow = document.createElement("div");
+      typingRow.className = "msg ai";
+      const typingBubble = document.createElement("div");
+      typingBubble.className = "bubble";
+      typingBubble.textContent = "Typing...";
+      typingRow.appendChild(typingBubble);
+      messages.appendChild(typingRow);
+      messages.scrollTop = messages.scrollHeight;
+
+      try{
+        const res = await fetch("/chat", {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        typingBubble.textContent = data.reply || "No response";
+      }catch(e){
+        typingBubble.textContent = "Error connecting AI";
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter") sendMessage();
+    });
+  </script>
 </body>
 </html>
