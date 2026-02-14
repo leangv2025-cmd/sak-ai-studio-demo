@@ -38,9 +38,29 @@
 
 <div class="box">
 <h2>AI Assistant</h2>
-<input placeholder="Type a message...">
-<button>Send</button>
-<p>(Demo UI only)</p>
+<input id="chatInput" placeholder="Type a message...">
+<button onclick="sendMessage()">Send</button>
+
+<div id="chatBox" style="margin-top:20px;"></div>
+
+<script>
+async function sendMessage() {
+  const input = document.getElementById("chatInput").value;
+  const chatBox = document.getElementById("chatBox");
+
+  chatBox.innerHTML += "<p><b>You:</b> " + input + "</p>";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({message: input})
+  });
+
+  const data = await res.json();
+
+  chatBox.innerHTML += "<p><b>AI:</b> " + data.reply + "</p>";
+}
+</script>
 </div>
 
 <div class="box">
