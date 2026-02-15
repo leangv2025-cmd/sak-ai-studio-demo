@@ -543,7 +543,27 @@ textarea{ font-size: 15px; }
 
     // Local memory
     let history = [];
+    
+    function clearAllInputs() {
+  // Chat input
+  const chatInput = document.getElementById("input");
+  if (chatInput) chatInput.value = "";
 
+  // Voice input (ប្តូរឈ្មោះ id តាមរបស់បង)
+  const ttsInput = document.getElementById("ttsInput");
+  if (ttsInput) ttsInput.value = "";
+
+  // Image input (ប្តូរឈ្មោះ id តាមរបស់បង)
+  const imgInput = document.getElementById("imgPrompt");
+  if (imgInput) imgInput.value = "";
+}
+
+function focusActiveTab(tab) {
+  if (tab === "chat") document.getElementById("input")?.focus();
+  if (tab === "voice") document.getElementById("ttsInput")?.focus();
+  if (tab === "image") document.getElementById("imgPrompt")?.focus();
+}
+   
     function openPopup(which) {
       chat.classList.add("open");
       setTab(which || "chat");
