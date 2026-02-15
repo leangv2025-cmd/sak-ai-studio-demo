@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SAK AI Studio Demo</title>
+
   <style>
     :root{
       --bg1:#071525;
-      --line:rgba(255,255,255,.08);
+      --card:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.10);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.65);
       --bubble:rgba(255,255,255,.09);
@@ -26,99 +28,142 @@
       justify-content:center;
       padding:18px 12px 120px;
     }
-    .page{width:min(980px, 100%)}
-    .hero{text-align:center; padding:26px 10px 10px}
-    .hero h1{margin:0; font-size: clamp(34px, 7vw, 62px); font-weight: 750}
-    .hero p{margin:12px auto 0; max-width:680px; color:var(--muted); line-height:1.55; font-size:clamp(14px, 2.5vw, 18px)}
+    .page{ width:min(980px, 100%); }
+    .hero{ text-align:center; padding:26px 10px 10px; }
+    .hero h1{
+      margin:0; font-size: clamp(34px, 7vw, 62px);
+      letter-spacing: .5px; font-weight: 750;
+    }
+    .hero p{
+      margin:12px auto 0; max-width: 680px;
+      color: var(--muted); line-height:1.55;
+      font-size: clamp(14px, 2.5vw, 18px);
+    }
     .pill{
       display:inline-flex; gap:8px; align-items:center;
       padding:8px 12px; border:1px solid var(--line);
       border-radius:999px; color:var(--muted); font-size:13px;
-      background: rgba(255,255,255,.03);
-      margin-top:12px;
+      background: rgba(255,255,255,.03); margin-top:12px;
     }
-    .grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; padding:18px 6px}
+    .grid{
+      display:grid; grid-template-columns: repeat(3, 1fr);
+      gap:14px; padding: 18px 6px;
+    }
     @media (max-width:860px){ .grid{grid-template-columns:1fr} }
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      border:1px solid var(--line); border-radius:16px;
+      padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
       min-height: 130px;
     }
     .card h3{margin:0 0 6px; font-size:18px}
     .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
 
-    /* Floating buttons */
-    .fabCol{
-      position:fixed; right:16px; bottom:18px;
-      display:flex; flex-direction:column; gap:12px;
-      z-index:999; align-items:flex-end;
+    /* ===== Floating buttons (3) ===== */
+    .floatStack{
+      position:fixed;
+      right:16px;
+      bottom:18px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:2000;
+      pointer-events:auto;
     }
-    .fab{
-      width:62px; height:62px; border-radius:999px; border:none; cursor:pointer;
+    .floatBtn{
+      width:62px; height:62px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
       background: radial-gradient(60px 60px at 35% 30%, #8894ff 0%, var(--btn) 40%, #2b34b5 100%);
       box-shadow: var(--shadow);
       display:flex; align-items:center; justify-content:center;
       color:white;
+      pointer-events:auto;
+      touch-action:manipulation;
     }
-    .fab.small{ width:54px; height:54px; opacity:.95 }
-    .fab:active{transform: translateY(1px)}
-    .fab svg{width:26px;height:26px}
+    .floatBtn:active{ transform: translateY(1px); }
+    .floatBtn svg{ width:26px; height:26px; }
+    .floatLabel{
+      position:absolute;
+      right:74px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.9);
+      font-size:12px;
+      white-space:nowrap;
+      opacity:0;
+      transform: translateX(6px);
+      transition: .18s ease;
+      pointer-events:none;
+      backdrop-filter: blur(8px);
+    }
+    .floatWrap{ position:relative; }
+    .floatWrap:hover .floatLabel{ opacity:1; transform: translateX(0); }
 
-    /* Popup */
+    /* ===== Modal ===== */
     .chat{
-      position:fixed; right:16px; bottom:92px;
-      width: min(560px, calc(100vw - 24px));
-      height: min(760px, calc(100vh - 120px));
+      position:fixed;
+      right:16px;
+      bottom:92px;
+      width:min(520px, calc(100vw - 24px));
+      height:min(720px, calc(100vh - 120px));
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border:1px solid var(--line);
       border-radius:18px;
       box-shadow: var(--shadow);
       overflow:hidden;
       display:none;
-      z-index:1000;
+      z-index:1500;
       backdrop-filter: blur(10px);
     }
     .chat.open{display:flex; flex-direction:column}
-
     .chatHeader{
       display:flex; justify-content:space-between; align-items:center;
       padding:14px 14px 12px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.12);
     }
-    .chatHeader .title{display:flex; flex-direction:column; gap:2px}
+    .chatHeader .title{ display:flex; flex-direction:column; gap:2px; }
     .chatHeader .title strong{font-size:16px}
     .chatHeader .title span{font-size:12px; color:var(--muted)}
     .iconBtn{
       border:none; background:transparent; color:rgba(255,255,255,.85);
       cursor:pointer; width:40px;height:40px; border-radius:10px;
+      touch-action:manipulation;
     }
     .iconBtn:hover{background: rgba(255,255,255,.06)}
     .iconBtn svg{width:20px;height:20px}
 
-    .tabs{ display:flex; gap:10px; padding: 10px 12px; border-bottom:1px solid var(--line); background: rgba(0,0,0,.06) }
-    .tabBtn{
-      padding:10px 14px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.85);
-      cursor:pointer;
-      font-weight:700;
-    }
-    .tabBtn.active{
-      background: rgba(92,108,255,.25);
-      border-color: rgba(92,108,255,.45);
-      color:white;
-    }
-
-    .chatTools{
+    /* Tabs */
+    .tabs{
       display:flex; gap:10px; padding:10px 12px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.08);
+      flex-wrap:wrap;
+    }
+    .tabBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.85);
+      padding:10px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:14px;
+      touch-action:manipulation;
+    }
+    .tabBtn.active{
+      background: rgba(92,108,255,.22);
+      border-color: rgba(92,108,255,.45);
+    }
+
+    .tools{
+      display:flex; gap:10px; padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.06);
       align-items:center; flex-wrap:wrap;
     }
     .tool{
@@ -127,17 +172,31 @@
       border-radius:12px; background: rgba(255,255,255,.03);
       color:var(--muted); font-size:12px;
     }
-    .tool select, .tool button{
+    .tool select{
       background: transparent; border:none;
-      color: rgba(255,255,255,.9);
-      outline:none; font-size:12px; cursor:pointer;
+      color: rgba(255,255,255,.85);
+      outline:none; font-size:12px;
+    }
+    .tool button{
+      background:transparent; border:none;
+      color: rgba(255,255,255,.85);
+      cursor:pointer; font-size:12px;
+      touch-action:manipulation;
     }
 
-    .chatBody{ flex:1; padding:14px 12px 10px; overflow:auto; }
+    .panel{ display:none; padding:12px; overflow:auto; flex:1; }
+    .panel.active{ display:block; }
+
+    /* Chat panel */
+    .chatBody{
+      padding:14px 12px 10px;
+      overflow:auto;
+      height: calc(100% - 120px);
+    }
     .msgRow{display:flex; margin:10px 0}
     .msgRow.user{justify-content:flex-end}
     .bubble{
-      max-width: 90%;
+      max-width: 85%;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--line);
@@ -152,78 +211,71 @@
       background: rgba(92,108,255,.22);
       border-color: rgba(92,108,255,.35);
     }
-
     .hint{ text-align:center; font-size:12px; color: var(--muted); padding: 0 12px 10px; }
-
     .chatFooter{
-      padding:12px; border-top:1px solid var(--line);
+      padding:12px;
+      border-top:1px solid var(--line);
       background: rgba(0,0,0,.10);
-      display:flex; gap:10px; align-items:flex-end;
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
     }
     textarea{
-      flex:1; resize:none; min-height:44px; max-height:120px;
-      border-radius:14px; border:1px solid var(--line); outline:none;
+      flex:1;
+      resize:none;
+      min-height:44px;
+      max-height:120px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      outline:none;
       padding:10px 12px;
       background: rgba(0,0,0,.20);
       color: var(--text);
-      font-size:16px; line-height:1.35;
+      font-size:16px;
+      line-height:1.35;
     }
     .sendBtn{
-      border:none; cursor:pointer; padding:12px 14px; border-radius:14px;
-      background: linear-gradient(180deg, var(--btn), var(--btn2));
-      color:white; font-weight:700; min-width:96px;
-      box-shadow: 0 10px 20px rgba(92,108,255,.18);
-    }
-    .sendBtn:disabled{opacity:.55; cursor:not-allowed}
-
-    .panel{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      background: rgba(0,0,0,.10);
-    }
-    .panel h3{ margin:0 0 6px; }
-    .panel p{ margin:0 0 12px; color:var(--muted); line-height:1.5; }
-
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
-    .field{ display:flex; flex-direction:column; gap:6px; min-width: 160px; flex:1; }
-    .field label{ font-size:12px; color:var(--muted); }
-    .field select, .field input{
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.20);
-      color: var(--text);
-      outline:none;
-    }
-    .btnBig{
-      border:none; cursor:pointer;
+      border:none;
+      cursor:pointer;
       padding:12px 14px;
       border-radius:14px;
       background: linear-gradient(180deg, var(--btn), var(--btn2));
-      color:white; font-weight:800;
-      min-width: 180px;
+      color:white;
+      font-weight:800;
+      min-width:92px;
       box-shadow: 0 10px 20px rgba(92,108,255,.18);
+      touch-action:manipulation;
     }
-    .statusBox{
-      margin-top:10px;
-      padding:10px 12px;
+
+    /* Voice panel */
+    .field{
+      width:100%;
+      border:1px solid var(--line);
       border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.88);
-      line-height:1.45;
-      font-size:14px;
-      white-space: pre-wrap;
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding:12px;
+      font-size:16px;
+      outline:none;
     }
-    .imgOut{
-      margin-top:12px;
-      border-radius:16px;
-      overflow:hidden;
-      border:1px solid var(--line);
-      display:none;
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap; margin:12px 0;
     }
-    .imgOut img{ width:100%; display:block; }
+    .row .tool{ font-size:13px; }
+    .primaryBtn{
+      border:none; cursor:pointer;
+      padding:12px 16px;
+      border-radius:14px;
+      background: linear-gradient(180deg, var(--btn), var(--btn2));
+      color:white;
+      font-weight:800;
+      min-width:170px;
+      touch-action:manipulation;
+    }
+    audio{ width:100%; margin-top:12px; }
+
+    /* prevent invisible overlay blocking touches */
+    .chat, .floatStack { pointer-events:auto; }
   </style>
 </head>
 
@@ -231,57 +283,59 @@
   <div class="page">
     <div class="hero">
       <h1>SAK AI Studio Demo</h1>
-      <p>Use the floating buttons to open Chat / Voice / Image.</p>
+      <p>AI platform demo for Chat, Voice & Image. Click a floating button to open the assistant.</p>
       <div class="pill">✅ Deployed on Railway • ✅ Connected</div>
     </div>
 
     <div class="grid">
-      <div class="card">
-        <h3>AI Assistant</h3>
-        <p>Chat with Gemini.</p>
-      </div>
-      <div class="card">
-        <h3>Voice AI (TTS)</h3>
-        <p>English + Khmer + Male/Female selector.</p>
-      </div>
-      <div class="card">
-        <h3>Image Generator</h3>
-        <p>Generate images from prompts.</p>
-      </div>
+      <div class="card"><h3>AI Assistant</h3><p>Ask questions, brainstorm ideas, write content, and get structured answers.</p></div>
+      <div class="card"><h3>Voice AI (TTS)</h3><p>Convert text into voice (English/Khmer).</p></div>
+      <div class="card"><h3>Image Generator</h3><p>Generate images from prompts.</p></div>
     </div>
   </div>
 
-  <div class="fabCol">
-    <button class="fab small" id="fabImage" aria-label="Open Image">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 6.5C4 5.12 5.12 4 6.5 4h11C18.88 4 20 5.12 20 6.5v11c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 20 4 18.88 4 17.5v-11Z" stroke="white" stroke-width="1.8"/>
-        <path d="M8 14l2.2-2.2a1.2 1.2 0 0 1 1.7 0L16.5 16" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M9 9.2h.01" stroke="white" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-    </button>
+  <!-- ===== Floating buttons: Chat / Voice / Image ===== -->
+  <div class="floatStack" aria-label="Floating actions">
+    <div class="floatWrap">
+      <div class="floatLabel">Chat</div>
+      <button class="floatBtn" id="fabChat" aria-label="Open Chat">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
 
-    <button class="fab small" id="fabVoice" aria-label="Open Voice">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.8"/>
-        <path d="M19 11a7 7 0 0 1-14 0" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M12 18v3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <div class="floatWrap">
+      <div class="floatLabel">Voice</div>
+      <button class="floatBtn" id="fabVoice" aria-label="Open Voice">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.8"/>
+          <path d="M19 11a7 7 0 0 1-14 0" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M12 18v3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
 
-    <button class="fab" id="fabChat" aria-label="Open chat">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-    </button>
+    <div class="floatWrap">
+      <div class="floatLabel">Image</div>
+      <button class="floatBtn" id="fabImage" aria-label="Open Image">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="white" stroke-width="1.8"/>
+          <path d="M8 14l2-2 3 3 2-2 3 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 9.2h.01" stroke="white" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
-  <div class="chat" id="chat">
+  <!-- ===== Popup modal (single) ===== -->
+  <div class="chat" id="modal">
     <div class="chatHeader">
       <div class="title">
         <strong>SAK AI Studio</strong>
         <span>Chat • Voice • Image</span>
       </div>
-      <button class="iconBtn" id="closeChat" aria-label="Close chat">
+      <button class="iconBtn" id="closeModal" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M6 6l12 12M18 6 6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -289,12 +343,12 @@
     </div>
 
     <div class="tabs">
-      <button class="tabBtn active" id="tabChat">Chat</button>
-      <button class="tabBtn" id="tabVoice">Voice AI</button>
-      <button class="tabBtn" id="tabImage">Image</button>
+      <button class="tabBtn active" id="tabChat" type="button">Chat</button>
+      <button class="tabBtn" id="tabVoice" type="button">Voice AI</button>
+      <button class="tabBtn" id="tabImage" type="button">Image</button>
     </div>
 
-    <div class="chatTools">
+    <div class="tools">
       <div class="tool">
         Answer:
         <select id="answerLen">
@@ -310,69 +364,148 @@
           <option value="off">Off</option>
         </select>
       </div>
-      <div class="tool">
-        <button id="clearAll" type="button">Clear</button>
+      <div class="tool"><button id="clearAll" type="button">Clear</button></div>
+    </div>
+
+    <!-- ===== Panels ===== -->
+    <div class="panel active" id="panelChat">
+      <div class="chatBody" id="chatBody"></div>
+      <div class="hint">Enter = send • Shift+Enter = new line</div>
+      <div class="chatFooter">
+        <textarea id="chatInput" placeholder="Type a message..."></textarea>
+        <button class="sendBtn" id="sendChat">Send</button>
       </div>
     </div>
 
-    <div class="chatBody" id="chatBody"></div>
-    <div class="hint" id="hint">Tip: Press Enter to send • Shift+Enter for new line</div>
+    <div class="panel" id="panelVoice">
+      <h2 style="margin:6px 0 6px;">Voice AI (Text-to-Speech)</h2>
+      <div style="color:var(--muted); margin-bottom:10px;">Type text → choose language & gender → generate voice.</div>
 
-    <div class="chatFooter" id="chatFooter">
-      <textarea id="input" placeholder="Type a message..."></textarea>
-      <button class="sendBtn" id="sendBtn">Send</button>
+      <textarea class="field" id="ttsText" rows="3" placeholder="Type text for voice..."></textarea>
+
+      <div class="row">
+        <div class="tool">
+          Language:
+          <select id="ttsLang">
+            <option value="en-US" selected>English (en-US)</option>
+            <option value="km-KH">Khmer (km-KH)</option>
+          </select>
+        </div>
+
+        <div class="tool">
+          Gender:
+          <select id="ttsGender">
+            <option value="FEMALE" selected>Female</option>
+            <option value="MALE">Male</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="primaryBtn" id="btnTts">Generate Voice</button>
+      <div id="ttsMsg" style="margin-top:10px; color:var(--muted);"></div>
+      <audio id="ttsAudio" controls style="display:none;"></audio>
+    </div>
+
+    <div class="panel" id="panelImage">
+      <h2 style="margin:6px 0 6px;">Image Generator</h2>
+      <div style="color:var(--muted); margin-bottom:10px;">Type a prompt → generate image.</div>
+      <textarea class="field" id="imgPrompt" rows="3" placeholder="e.g., cute cat, cinematic lighting"></textarea>
+      <div style="height:10px"></div>
+      <button class="primaryBtn" id="btnImage">Generate Image</button>
+      <div id="imgMsg" style="margin-top:10px; color:var(--muted);"></div>
+      <img id="imgOut" alt="" style="display:none; width:100%; margin-top:12px; border-radius:14px; border:1px solid var(--line);" />
     </div>
   </div>
 
   <script>
-    var chat = document.getElementById("chat");
-    var closeChat = document.getElementById("closeChat");
-    var chatBody = document.getElementById("chatBody");
-    var input = document.getElementById("input");
-    var sendBtn = document.getElementById("sendBtn");
-    var answerLen = document.getElementById("answerLen");
-    var memoryMode = document.getElementById("memoryMode");
-    var clearAll = document.getElementById("clearAll");
-    var hint = document.getElementById("hint");
-    var chatFooter = document.getElementById("chatFooter");
+    // ===== Safe DOM helpers =====
+    const $ = (id) => document.getElementById(id);
 
-    var tabChat = document.get/ElementById ? null : null; // (avoid parse issue)
-    tabChat = document.getElementById("tabChat");
-    var tabVoice = document.getElementById("tabVoice");
-    var tabImage = document.getElementById("tabImage");
+    // Buttons
+    const fabChat  = $("fabChat");
+    const fabVoice = $("fabVoice");
+    const fabImage = $("fabImage");
 
-    var fabChat = document.getElementById("fabChat");
-    var fabVoice = document.getElementById("fabVoice");
-    var fabImage = document.getElementById("fabImage");
+    const modal = $("modal");
+    const closeModal = $("closeModal");
 
-    var activeTab = "chat";
-    var history = [];
+    const tabChat  = $("tabChat");
+    const tabVoice = $("tabVoice");
+    const tabImage = $("tabImage");
 
-    function openChat(tab) {
-      chat.classList.add("open");
-      switchTab(tab || "chat");
-      setTimeout(function(){ if (input) input.focus(); }, 80);
+    const panelChat  = $("panelChat");
+    const panelVoice = $("panelVoice");
+    const panelImage = $("panelImage");
+
+    const answerLen = $("answerLen");
+    const memoryMode = $("memoryMode");
+    const clearAll = $("clearAll");
+
+    // Chat UI
+    const chatBody = $("chatBody");
+    const chatInput = $("chatInput");
+    const sendChat = $("sendChat");
+
+    // Voice UI
+    const ttsText = $("ttsText");
+    const ttsLang = $("ttsLang");
+    const ttsGender = $("ttsGender");
+    const btnTts = $("btnTts");
+    const ttsMsg = $("ttsMsg");
+    const ttsAudio = $("ttsAudio");
+
+    // Image UI
+    const imgPrompt = $("imgPrompt");
+    const btnImage = $("btnImage");
+    const imgMsg = $("imgMsg");
+    const imgOut = $("imgOut");
+
+    // Local memory
+    let history = [];
+
+    function openModal(toTab){
+      modal.classList.add("open");
+      setTab(toTab || "chat");
+      setTimeout(() => {
+        if(toTab === "voice") ttsText.focus();
+        else if(toTab === "image") imgPrompt.focus();
+        else chatInput.focus();
+      }, 80);
     }
-    function closeChatPopup() { chat.classList.remove("open"); }
+    function closePopup(){
+      modal.classList.remove("open");
+    }
 
-    fabChat.addEventListener("click", function(){ openChat("chat"); });
-    fabVoice.addEventListener("click", function(){ openChat("voice"); });
-    fabImage.addEventListener("click", function(){ openChat("image"); });
-    closeChat.addEventListener("click", closeChatPopup);
+    closeModal.addEventListener("click", closePopup);
 
+    // IMPORTANT: use pointerup for mobile reliability
+    fabChat.addEventListener("pointerup", () => openModal("chat"));
+    fabVoice.addEventListener("pointerup", () => openModal("voice"));
+    fabImage.addEventListener("pointerup", () => openModal("image"));
+
+    function setTab(name){
+      // buttons
+      tabChat.classList.toggle("active", name==="chat");
+      tabVoice.classList.toggle("active", name==="voice");
+      tabImage.classList.toggle("active", name==="image");
+
+      // panels
+      panelChat.classList.toggle("active", name==="chat");
+      panelVoice.classList.toggle("active", name==="voice");
+      panelImage.classList.toggle("active", name==="image");
+    }
+
+    tabChat.addEventListener("click", () => setTab("chat"));
+    tabVoice.addEventListener("click", () => setTab("voice"));
+    tabImage.addEventListener("click", () => setTab("image"));
+
+    // ===== Chat functions =====
     function scrollToBottom(){ chatBody.scrollTop = chatBody.scrollHeight; }
 
-    function setActive(btn){
-      tabChat.classList.remove("active");
-      tabVoice.classList.remove("active");
-      tabImage.classList.remove("active");
-      btn.classList.add("active");
-    }
-
     function addMessage(role, text){
-      var row = document.createElement("div");
+      const row = document.createElement("div");
       row.className = "msgRow " + (role === "user" ? "user" : "assistant");
-      var bubble = document.createElement("div");
+      const bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.textContent = text;
       row.appendChild(bubble);
@@ -380,237 +513,146 @@
       scrollToBottom();
     }
 
-    function addTyping(){
-      var row = document.createElement("div");
-      row.className = "msgRow assistant";
-      row.id = "typingRow";
-      var bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.innerHTML = "…";
-      row.appendChild(bubble);
-      chatBody.appendChild(row);
-      scrollToBottom();
-    }
-    function removeTyping(){
-      var row = document.getElementById("typingRow");
-      if (row) row.remove();
-    }
-
-    async function safeJsonFetch(url, options){
-      var r = await fetch(url, options);
-      var ct = r.headers.get("content-type") || "";
-      var txt = await r.text();
-      if (ct.indexOf("application/json") === -1) {
-        throw new Error("Server returned non-JSON: " + txt.slice(0,120));
-      }
-      var data = JSON.parse(txt);
-      if (!r.ok || data.ok === false) {
-        throw new Error(data.error || data.reply || ("Request failed: " + r.status));
-      }
-      return data;
-    }
-
     function buildPrompt(userText){
-      var len = answerLen.value;
-      var styleRule = "";
+      const len = answerLen.value;
+      let styleRule = "";
       if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
       if (len === "medium") styleRule = "Answer clearly with bullets/steps and one example.";
       if (len === "long") styleRule = "Answer in detail with sections, steps, and multiple examples.";
-      return "Please follow: " + styleRule + "\n\nUser: " + userText;
+      return `Please follow: ${styleRule}\n\nUser: ${userText}`;
     }
 
-    async function sendChat(){
-      var raw = (input.value || "").trim();
-      if (!raw) return;
+    async function sendChatMessage(){
+      const raw = (chatInput.value || "").trim();
+      if(!raw) return;
 
-      input.value = "";
-      sendBtn.disabled = true;
-
+      chatInput.value = "";
+      sendChat.disabled = true;
       addMessage("user", raw);
       history.push({ role:"user", text: raw });
-      addTyping();
 
-      try {
-        var payload = {
+      try{
+        const payload = {
           message: buildPrompt(raw),
-          history: (memoryMode.value === "on") ? history.slice(-12) : []
+          history: memoryMode.value === "on" ? history.slice(-12) : []
         };
 
-        var data = await safeJsonFetch("/chat", {
+        const r = await fetch("/chat", {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
           body: JSON.stringify(payload)
         });
 
-        removeTyping();
-        addMessage("assistant", String(data.reply || "No response"));
-      } catch(e){
-        removeTyping();
-        addMessage("assistant", "Error: " + e.message);
-      } finally {
-        sendBtn.disabled = false;
-        if (input) input.focus();
+        const data = await r.json();
+        const reply = data?.reply ? String(data.reply) : "No response";
+        addMessage("assistant", reply);
+        history.push({ role:"assistant", text: reply });
+      }catch(e){
+        addMessage("assistant", "Network/Server error: " + e.message);
+      }finally{
+        sendChat.disabled = false;
+        chatInput.focus();
       }
     }
 
-    sendBtn.addEventListener("click", function(){
-      if (activeTab === "chat") sendChat();
-    });
-
-    input.addEventListener("keydown", function(e){
-      if (activeTab !== "chat") return;
-      if (e.key === "Enter" && !e.shiftKey) {
+    sendChat.addEventListener("click", sendChatMessage);
+    chatInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" && !e.shiftKey){
         e.preventDefault();
-        sendChat();
+        sendChatMessage();
       }
     });
 
-    function renderChatTab(){
-      chatBody.innerHTML = "";
-      hint.style.display = "block";
-      chatFooter.style.display = "flex";
-      addMessage("assistant", "Hello! How can I help you today?");
-    }
+    // ===== Voice =====
+    btnTts.addEventListener("click", async () => {
+      const text = (ttsText.value || "").trim();
+      if(!text){
+        ttsMsg.textContent = "Please type text for voice.";
+        return;
+      }
 
-    function renderVoicePanel(){
-      chatBody.innerHTML = "";
-      hint.style.display = "none";
-      chatFooter.style.display = "none";
+      ttsMsg.textContent = "Generating voice...";
+      ttsAudio.style.display = "none";
+      ttsAudio.src = "";
 
-      var wrap = document.createElement("div");
-      wrap.className = "panel";
-      wrap.innerHTML =
-        '<h3>Voice AI (Text-to-Speech)</h3>' +
-        '<p>Choose Language + Gender → Generate Voice → Play.</p>' +
-        '<div class="row">' +
-          '<div class="field"><label>Language</label>' +
-            '<select id="ttsLang">' +
-              '<option value="en-US">English (en-US)</option>' +
-              '<option value="km-KH">Khmer (km-KH)</option>' +
-            '</select>' +
-          '</div>' +
-          '<div class="field"><label>Gender</label>' +
-            '<select id="ttsGender">' +
-              '<option value="FEMALE" selected>Female</option>' +
-              '<option value="MALE">Male</option>' +
-            '</select>' +
-          '</div>' +
-        '</div>' +
-        '<div class="row">' +
-          '<div class="field"><label>Text</label>' +
-            '<input id="ttsText" value="Hello! I am SAK AI Studio assistant." />' +
-          '</div>' +
-        '</div>' +
-        '<button class="btnBig" id="btnTts">Generate Voice</button>' +
-        '<div class="statusBox" id="ttsStatus">Ready.</div>' +
-        '<div class="statusBox" style="padding:12px"><audio id="ttsAudio" controls style="width:100%"></audio></div>';
-
-      chatBody.appendChild(wrap);
-
-      document.getElementById("btnTts").addEventListener("click", runTts);
-    }
-
-    async function runTts(){
-      var lang = document.getElementById("ttsLang").value;
-      var gender = document.getElementById("ttsGender").value;
-      var text = (document.getElementById("ttsText").value || "").trim();
-      var status = document.getElementById("ttsStatus");
-      var audio = document.getElementById("ttsAudio");
-
-      if (!text) { status.textContent = "Error: Please type text."; return; }
-
-      status.textContent = "Generating voice...";
-      audio.removeAttribute("src");
-
-      try {
-        var data = await safeJsonFetch("/tts", {
+      try{
+        const r = await fetch("/tts", {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ text:text, languageCode: lang, gender: gender })
+          body: JSON.stringify({
+            text,
+            languageCode: ttsLang.value,
+            gender: ttsGender.value
+          })
         });
 
-        audio.src = "data:audio/mp3;base64," + data.audioContent;
-        status.textContent = "Done: " + (data.voiceUsed || "");
-        audio.play().catch(function(){});
-      } catch(e){
-        status.textContent = "Error: " + e.message;
+        // if server accidentally returns HTML, this prevents JSON crash
+        const ct = r.headers.get("content-type") || "";
+        if(!ct.includes("application/json")){
+          const raw = await r.text();
+          throw new Error("Server returned non-JSON: " + raw.slice(0,60));
+        }
+
+        const data = await r.json();
+        if(!data?.audioUrl) throw new Error(data?.error || "No audioUrl returned");
+
+        ttsMsg.textContent = "Done ✅";
+        ttsAudio.src = data.audioUrl;
+        ttsAudio.style.display = "block";
+        ttsAudio.play().catch(()=>{});
+      }catch(e){
+        ttsMsg.textContent = "Error: " + e.message;
       }
-    }
+    });
 
-    function renderImagePanel(){
-      chatBody.innerHTML = "";
-      hint.style.display = "none";
-      chatFooter.style.display = "none";
+    // ===== Image =====
+    btnImage.addEventListener("click", async () => {
+      const prompt = (imgPrompt.value || "").trim();
+      if(!prompt){
+        imgMsg.textContent = "Please type an image prompt.";
+        return;
+      }
 
-      var wrap = document.createElement("div");
-      wrap.className = "panel";
-      wrap.innerHTML =
-        '<h3>Image Generator</h3>' +
-        '<p>Type prompt → generate image.</p>' +
-        '<div class="row">' +
-          '<div class="field"><label>Prompt</label>' +
-            '<input id="imgPrompt" placeholder="e.g., chicken on grill, cinematic lighting" />' +
-          '</div>' +
-        '</div>' +
-        '<button class="btnBig" id="btnImg">Generate Image</button>' +
-        '<div class="statusBox" id="imgStatus">Ready.</div>' +
-        '<div class="imgOut" id="imgOut"><img id="imgEl" alt="Generated image"/></div>';
+      imgMsg.textContent = "Generating image...";
+      imgOut.style.display = "none";
+      imgOut.src = "";
 
-      chatBody.appendChild(wrap);
-
-      document.getElementById("btnImg").addEventListener("click", runImage);
-    }
-
-    async function runImage(){
-      var prompt = (document.getElementById("imgPrompt").value || "").trim();
-      var status = document.getElementById("imgStatus");
-      var out = document.getElementById("imgOut");
-      var img = document.getElementById("imgEl");
-
-      if (!prompt) { status.textContent = "Error: Please type a prompt."; return; }
-
-      status.textContent = "Generating image...";
-      out.style.display = "none";
-      img.removeAttribute("src");
-
-      try {
-        var data = await safeJsonFetch("/image", {
+      try{
+        const r = await fetch("/image", {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ prompt: prompt })
+          body: JSON.stringify({ prompt })
         });
 
-        img.src = data.imageDataUrl;
-        out.style.display = "block";
-        status.textContent = "Done.";
-      } catch(e){
-        status.textContent = "Error: " + e.message;
+        const ct = r.headers.get("content-type") || "";
+        if(!ct.includes("application/json")){
+          const raw = await r.text();
+          throw new Error("Server returned non-JSON: " + raw.slice(0,60));
+        }
+
+        const data = await r.json();
+        if(!data?.imageUrl) throw new Error(data?.error || "No imageUrl returned");
+
+        imgMsg.textContent = "Done ✅";
+        imgOut.src = data.imageUrl;
+        imgOut.style.display = "block";
+      }catch(e){
+        imgMsg.textContent = "Error: " + e.message;
       }
-    }
+    });
 
-    function switchTab(tab){
-      activeTab = tab;
-
-      if (tab === "chat") setActive(tabChat);
-      if (tab === "voice") setActive(tabVoice);
-      if (tab === "image") setActive(tabImage);
-
-      if (tab === "chat") return renderChatTab();
-      if (tab === "voice") return renderVoicePanel();
-      if (tab === "image") return renderImagePanel();
-    }
-
-    tabChat.addEventListener("click", function(){ switchTab("chat"); });
-    tabVoice.addEventListener("click", function(){ switchTab("voice"); });
-    tabImage.addEventListener("click", function(){ switchTab("image"); });
-
-    clearAll.addEventListener("click", function(){
+    clearAll.addEventListener("click", () => {
+      chatBody.innerHTML = "";
       history = [];
-      switchTab(activeTab);
+      addMessage("assistant", "Hello! How can I help you today?");
+      ttsMsg.textContent = "";
+      imgMsg.textContent = "";
+      ttsAudio.style.display = "none";
+      imgOut.style.display = "none";
     });
 
-    // Start
-    switchTab("chat");
+    // Initial greeting
+    addMessage("assistant", "Hello! How can I help you today?");
   </script>
 </body>
 </html>
