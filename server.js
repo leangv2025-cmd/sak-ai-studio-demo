@@ -24,9 +24,34 @@ app.post("/chat", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 256 }
-      })
+  contents: [
+    {
+      role: "user",
+      parts: [{
+        text:
+`You are SAK AI Studio Assistant.
+Goal: give clear, detailed, helpful answers.
+
+Rules:
+1) If the user request is unclear, ask 1 short clarifying question AND still provide a best-guess answer.
+2) Prefer structured output: use bullets/steps, examples, and a final short summary.
+3) Write in the same language as the user. If user writes English, respond in English.
+4) Avoid being vague. Give at least 1 concrete example.
+5) For writing requests (stories/prompts), provide a complete output, not just "options".
+
+Now respond to the user's message.`
+      }]
+    },
+    {
+      role: "user",
+      parts: [{ text: userMessage }]
+    }
+  ],
+  generationConfig: {
+    temperature: 0.7,
+    maxOutputTokens: 800
+  }
+})
     });
 
     const data = await response.json();
