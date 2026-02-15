@@ -605,13 +605,24 @@
     }
 
     function buildPrompt(userText) {
-      const len = answerLen.value;
-      let styleRule = "";
-      if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
-      if (len === "medium") styleRule = "Answer clearly with bullets/steps and one example.";
-      if (len === "long") styleRule = "Answer in detail with sections, steps, and multiple examples.";
-      return `Please follow: ${styleRule}\n\nUser: ${userText}`;
-    }
+  const len = answerLen.value;
+
+  // If user message is very short (hi/ok/yes), don't force steps/examples
+  const tiny = userText.trim().length <= 10;
+
+  let styleRule = "";
+  if (tiny) {
+    styleRule = "Reply naturally and helpfully. Ask 1 short question to understand what the user wants.";
+  } else if (len === "short") {
+    styleRule = "Answer concisely in 3-6 sentences.";
+  } else if (len === "medium") {
+    styleRule = "Answer clearly with bullets/steps when helpful and include one short example only if needed.";
+  } else {
+    styleRule = "Answer in detail with sections, steps, and multiple examples.";
+  }
+
+  return `System: You are SAK AI Studio assistant. Be clear and practical.\nInstruction: ${styleRule}\n\nUser: ${userText}`;
+}
 
     async function safeJsonFetch(url, payload) {
       const r = await fetch(url, {
