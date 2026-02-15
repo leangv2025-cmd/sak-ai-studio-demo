@@ -1,219 +1,253 @@
+// server.js
+// SAK AI Studio Demo - Chat + Voice(TTS) + Image(Imagen)
+// Node 18+ / 20+ / 22+ (Railway OK)
+
 const express = require("express");
+const path = require("path");
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
 
-function jsonError(res, code, message, extra) {
-  return res.status(code).json({
-    ok: false,
-    error: message,
-    ...(extra ? { extra } : {})
-  });
+// ===== ENV =====
+const GEMINI_KEY = process.env.GEMINI_KEY || "";
+const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY || "";
+
+// Chat model (Gemini text)
+const CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-2.5-flash";
+// Image model (Imagen)
+const IMAGEN_MODEL = process.env.IMAGEN_MODEL || "imagen-4.0-generate-001";
+
+// ===== Helpers =====
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
 }
 
+async function fetchJson(url, options) {
+  const r = await fetch(url, options);
+  const ct = (r.headers.get("content-type") || "").toLowerCase();
+  const text = await r.text();
+
+  // If not JSON, throw helpful error (prevents "Unexpected token <")
+  if (!ct.includes("application/json")) {
+    const snippet = text.slice(0, 220);
+    throw new Error(`Non-JSON response (${r.status}). ${snippet}`);
+  }
+
+  const data = JSON.parse(text);
+  if (!r.ok) {
+    const msg = data?.error?.message || `Request failed (${r.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+// ===== Health =====
 app.get("/health", (req, res) => {
   res.json({
     ok: true,
     service: "sak-ai-studio",
-    hasGeminiKey: !!process.env.GEMINI_KEY,
-    hasTtsKey: !!process.env.GOOGLE_TTS_API_KEY,
-    chatModel: process.env.GEMINI_CHAT_MODEL || "gemini-2.5-flash",
-    imageModel: process.env.GEMINI_IMAGE_MODEL || ""
+    hasGeminiKey: !!GEMINI_KEY,
+    hasTtsKey: !!GOOGLE_TTS_API_KEY,
+    chatModel: CHAT_MODEL,
+    imageModel: IMAGEN_MODEL,
   });
 });
 
-/**
- * CHAT: Gemini generateContent
- */
+// ===== CHAT (Gemini generateContent) =====
 app.post("/chat", async (req, res) => {
+  const userMessage = String(req.body?.message || "").trim();
+  const history = Array.isArray(req.body?.history) ? req.body.history : [];
+
+  if (!userMessage) return res.json({ reply: "Please type a message." });
+  if (!GEMINI_KEY) return res.json({ reply: "Missing GEMINI_KEY in server variables." });
+
   try {
-    const apiKey = process.env.GEMINI_KEY;
-    if (!apiKey) return jsonError(res, 400, "Missing GEMINI_KEY in server environment.");
+    // Build contents for Gemini
+    const contents = [];
 
-    const userMessage = String(req.body?.message || "").trim();
-    if (!userMessage) return res.json({ ok: true, reply: "Please type a message." });
+    // Optional history (last 12)
+    for (const h of history.slice(-12)) {
+      const role = h?.role === "user" ? "user" : "model";
+      const text = String(h?.text || "").trim();
+      if (text) contents.push({ role, parts: [{ text }] });
+    }
 
-    const model = process.env.GEMINI_CHAT_MODEL || "gemini-2.5-flash";
+    // Current user
+    contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      encodeURIComponent(model) +
-      ":generateContent?key=" +
-      encodeURIComponent(apiKey);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      CHAT_MODEL
+    )}:generateContent?key=${encodeURIComponent(GEMINI_KEY)}`;
 
-    const payload = {
-      contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
-    };
-
-    const r = await fetch(url, {
+    const data = await fetchJson(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 512,
+        },
+      }),
     });
-
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch (e) {
-      return jsonError(res, 500, "Gemini returned non-JSON (often 404/HTML). Check model + key.", { sample: text.slice(0, 180) });
-    }
-
-    if (!r.ok || data.error) {
-      return jsonError(res, r.status || 500, data?.error?.message || "Gemini error", data?.error);
-    }
 
     const reply =
-      data?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("") ||
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p) => p?.text || "")
+        .join("")
+        .trim() ||
       "No response";
 
-    return res.json({ ok: true, reply });
+    return res.json({ reply });
   } catch (e) {
-    return jsonError(res, 500, "Server error in /chat", { message: e.message });
+    return res.json({ reply: "Server error: " + e.message });
   }
 });
 
-/**
- * TTS: Google Cloud Text-to-Speech (API KEY)
- * POST /tts  { text, languageCode, gender }
- */
+// ===== VOICE (Google Cloud Text-to-Speech) =====
+// Client sends: { text, languageCode: "en-US"|"km-KH", gender: "FEMALE"|"MALE" }
 app.post("/tts", async (req, res) => {
+  const text = String(req.body?.text || "").trim();
+  const languageCode = String(req.body?.languageCode || "en-US");
+  const genderRaw = String(req.body?.gender || "FEMALE").toUpperCase();
+  const gender = genderRaw === "MALE" ? "MALE" : "FEMALE";
+
+  if (!text) return res.json({ audioUrl: "", error: "Please type text for TTS." });
+  if (!GOOGLE_TTS_API_KEY)
+    return res.json({ audioUrl: "", error: "Missing GOOGLE_TTS_API_KEY in Railway Variables." });
+
   try {
-    const ttsKey = process.env.GOOGLE_TTS_API_KEY;
-    if (!ttsKey) return jsonError(res, 400, "Missing GOOGLE_TTS_API_KEY in server environment.");
+    // 1) Get voices list and pick best match (language + gender)
+    const voicesUrl = `https://texttospeech.googleapis.com/v1/voices?key=${encodeURIComponent(
+      GOOGLE_TTS_API_KEY
+    )}`;
 
-    const text = String(req.body?.text || "").trim();
-    const languageCode = String(req.body?.languageCode || "en-US").trim();
-    const gender = String(req.body?.gender || "FEMALE").trim(); // FEMALE|MALE
+    const voicesData = await fetchJson(voicesUrl, { method: "GET" });
+    const voices = Array.isArray(voicesData?.voices) ? voicesData.voices : [];
 
-    if (!text) return jsonError(res, 400, "Please provide text.");
+    // Filter by language
+    const byLang = voices.filter((v) => (v.languageCodes || []).includes(languageCode));
+    // Filter by gender
+    const byLangGender = byLang.filter((v) => String(v.ssmlGender || "").toUpperCase() === gender);
 
-    // NOTE: Khmer voices depend on availability. languageCode km-KH is correct for Khmer.
-    // voice name is optional; Google will pick one if not specified.
-    const url =
-      "https://texttospeech.googleapis.com/v1/text:synthesize?key=" +
-      encodeURIComponent(ttsKey);
+    // Choose voice name (fallback to any in language)
+    const chosen =
+      byLangGender[0] || byLang[0] || voices[0];
 
-    const body = {
-      input: { text },
-      voice: { languageCode, ssmlGender: gender },
-      audioConfig: { audioEncoding: "MP3" }
-    };
-
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    const respText = await r.text();
-    let data;
-    try { data = JSON.parse(respText); }
-    catch (e) {
-      return jsonError(res, 500, "TTS returned non-JSON. (Often API not enabled or wrong key).", { sample: respText.slice(0, 180) });
-    }
-
-    if (!r.ok || data.error) {
-      return jsonError(res, r.status || 500, data?.error?.message || "TTS error", data?.error);
-    }
-
-    if (!data.audioContent) {
-      return jsonError(res, 500, "TTS returned no audioContent.", data);
-    }
-
-    return res.json({
-      ok: true,
-      audioContent: data.audioContent,
-      voiceUsed: languageCode + " / " + gender
-    });
-  } catch (e) {
-    return jsonError(res, 500, "Server error in /tts", { message: e.message });
-  }
-});
-
-/**
- * IMAGE: Gemini image endpoint
- * IMPORTANT:
- * - Different accounts/models may vary.
- * - This code expects your model supports image generation and returns inlineData (base64).
- *
- * POST /image { prompt }
- */
-app.post("/image", async (req, res) => {
-  try {
-    const apiKey = process.env.GEMINI_KEY;
-    if (!apiKey) return jsonError(res, 400, "Missing GEMINI_KEY in server environment.");
-
-    const prompt = String(req.body?.prompt || "").trim();
-    if (!prompt) return jsonError(res, 400, "Please provide prompt.");
-
-    const model = process.env.GEMINI_IMAGE_MODEL;
-    if (!model) {
-      return jsonError(res, 400, "Missing GEMINI_IMAGE_MODEL. Set it in Railway Variables to a model that supports image generation.");
-    }
-
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      encodeURIComponent(model) +
-      ":generateContent?key=" +
-      encodeURIComponent(apiKey);
-
-    // Ask model for image
-    const payload = {
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 256 }
-    };
-
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const raw = await r.text();
-    let data;
-    try { data = JSON.parse(raw); }
-    catch (e) {
-      return jsonError(res, 500, "Image model returned non-JSON (check model name).", { sample: raw.slice(0, 180) });
-    }
-
-    if (!r.ok || data.error) {
-      return jsonError(res, r.status || 500, data?.error?.message || "Image model error", data?.error);
-    }
-
-    // Try to find inline image data
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    let found = null;
-
-    for (const p of parts) {
-      // common shape: { inlineData: { mimeType, data } }
-      if (p && p.inlineData && p.inlineData.data) {
-        found = p.inlineData;
-        break;
-      }
-      // some shapes: { inline_data: { mime_type, data } }
-      if (p && p.inline_data && p.inline_data.data) {
-        found = { mimeType: p.inline_data.mime_type || "image/png", data: p.inline_data.data };
-        break;
-      }
-    }
-
-    if (!found) {
-      return jsonError(res, 500, "No image data returned. Your model may not support image output for generateContent.", {
-        tip: "Set GEMINI_IMAGE_MODEL to a supported image model from ListModels."
+    if (!chosen?.name) {
+      return res.json({
+        audioUrl: "",
+        error: "No available voice found. Check if Text-to-Speech API is enabled and language is supported.",
       });
     }
 
-    const mime = found.mimeType || "image/png";
-    const b64 = found.data;
-    const imageDataUrl = "data:" + mime + ";base64," + b64;
+    // 2) Synthesize
+    const synthUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(
+      GOOGLE_TTS_API_KEY
+    )}`;
 
-    return res.json({ ok: true, imageDataUrl });
+    const synthBody = {
+      input: { text: text.slice(0, 4000) },
+      voice: {
+        languageCode,
+        name: chosen.name,
+        ssmlGender: gender,
+      },
+      audioConfig: {
+        audioEncoding: "MP3",
+        speakingRate: 1.0,
+        pitch: 0.0,
+      },
+    };
+
+    const synthData = await fetchJson(synthUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(synthBody),
+    });
+
+    const audioContent = synthData?.audioContent;
+    if (!audioContent) {
+      return res.json({ audioUrl: "", error: "No audioContent returned from TTS." });
+    }
+
+    const audioUrl = `data:audio/mpeg;base64,${audioContent}`;
+    return res.json({ audioUrl, voiceName: chosen.name });
   } catch (e) {
-    return jsonError(res, 500, "Server error in /image", { message: e.message });
+    return res.json({ audioUrl: "", error: "TTS error: " + e.message });
+  }
+});
+
+// ===== IMAGE (Imagen REST predict) =====
+// Client sends: { prompt, aspectRatio }
+app.post("/image", async (req, res) => {
+  const prompt = String(req.body?.prompt || "").trim();
+  const aspectRatio = String(req.body?.aspectRatio || "1:1");
+
+  if (!prompt) return res.json({ imageDataUrl: "", error: "Please type a prompt." });
+  if (!GEMINI_KEY) return res.json({ imageDataUrl: "", error: "Missing GEMINI_KEY in server variables." });
+
+  try {
+    // Imagen REST (official): models/imagen-4.0-generate-001:predict
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      IMAGEN_MODEL
+    )}:predict`;
+
+    const body = {
+      instances: [{ prompt }],
+      parameters: {
+        sampleCount: 1,
+        aspectRatio,
+        // personGeneration default allow_adult, keep safe
+        personGeneration: "allow_adult",
+      },
+    };
+
+    const data = await fetchJson(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_KEY,
+      },
+      body: JSON.stringify(body),
+    });
+
+    // Different backends may return different shapes; handle common ones
+    let b64 = "";
+
+    // Common: data.predictions[0].bytesBase64Encoded
+    b64 =
+      data?.predictions?.[0]?.bytesBase64Encoded ||
+      data?.predictions?.[0]?.image?.bytesBase64Encoded ||
+      data?.predictions?.[0]?.imageBytes ||
+      data?.predictions?.[0]?.image?.imageBytes ||
+      "";
+
+    if (!b64 && Array.isArray(data?.predictions) && data.predictions.length) {
+      // try any string field
+      const p0 = data.predictions[0];
+      for (const k of Object.keys(p0)) {
+        if (typeof p0[k] === "string" && p0[k].length > 1000) {
+          b64 = p0[k];
+          break;
+        }
+      }
+    }
+
+    if (!b64) {
+      return res.json({
+        imageDataUrl: "",
+        error: "No image data returned. Check image model and API response format.",
+      });
+    }
+
+    const imageDataUrl = `data:image/png;base64,${b64}`;
+    return res.json({ imageDataUrl });
+  } catch (e) {
+    return res.json({ imageDataUrl: "", error: "Image error: " + e.message });
   }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("Server running on port", PORT));
+app.listen(PORT, () => console.log("Server running on", PORT));
