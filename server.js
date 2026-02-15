@@ -6,6 +6,7 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.static(__dirname));
 
 // ENV
+process.env.GOOGLE_TTS_KEY
 const GEMINI_KEY = process.env.GEMINI_KEY; // same key for Gemini API + Imagen (AI Studio key)
 const CHAT_MODEL = process.env.CHAT_MODEL || "gemini-2.5-flash"; // you already confirmed this works
 const IMAGEN_MODEL = process.env.IMAGEN_MODEL || "imagen-4.0-generate-001"; // from Imagen docs
