@@ -8,7 +8,7 @@
     :root{
       --bg1:#071525;
       --bg2:#0b1b2f;
-      --line:rgba(255,255,255,.08);
+      --line:rgba(255,255,255,.09);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.65);
       --bubble:rgba(255,255,255,.09);
@@ -16,7 +16,9 @@
       --btn:#5c6cff;
       --btn2:#3e4cff;
       --shadow:0 18px 60px rgba(0,0,0,.55);
+      --glass: rgba(255,255,255,.06);
     }
+
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -26,24 +28,29 @@
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 12px 90px;
+      padding:18px 12px 110px;
+      overflow-x:hidden;
     }
-    .page{width:min(980px, 100%);}
-    .hero{text-align:center; padding:26px 10px 10px;}
-    .hero h1{margin:0; font-size: clamp(34px, 7vw, 62px); letter-spacing:.5px; font-weight:750;}
-    .hero p{margin:12px auto 0; max-width:680px; color:var(--muted); line-height:1.55; font-size: clamp(14px, 2.5vw, 18px);}
-    .grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; padding:18px 6px;}
-    @media (max-width:860px){ .grid{grid-template-columns:1fr} }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      min-height: 130px;
+
+    .page{ width:min(980px, 100%); }
+
+    .hero{
+      text-align:center;
+      padding:22px 10px 8px;
     }
-    .card h3{margin:0 0 6px; font-size:18px}
-    .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
+    .hero h1{
+      margin:0;
+      font-size: clamp(30px, 6.2vw, 56px);
+      letter-spacing: .5px;
+      font-weight: 800;
+    }
+    .hero p{
+      margin:12px auto 0;
+      max-width: 720px;
+      color: var(--muted);
+      line-height:1.55;
+      font-size: clamp(14px, 2.6vw, 18px);
+    }
     .pill{
       display:inline-flex;
       gap:8px;
@@ -57,34 +64,89 @@
       margin-top:12px;
     }
 
-    /* Chat modal (bigger for mobile) */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+      padding: 16px 6px;
+    }
+    @media (max-width:860px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      min-height: 128px;
+    }
+    .card h3{margin:0 0 6px; font-size:18px}
+    .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
+
+    /* ===== Floating Buttons Stack (right side) ===== */
+    .fabStack{
+      position:fixed;
+      right:16px;
+      bottom:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      z-index:1200;
+    }
+    .fab{
+      width:58px;
+      height:58px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      background: radial-gradient(60px 60px at 35% 30%, #8894ff 0%, var(--btn) 40%, #2b34b5 100%);
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:white;
+    }
+    .fab svg{width:26px;height:26px}
+    .fab:active{transform: translateY(1px)}
+    .fab[data-active="1"]{
+      outline: 2px solid rgba(255,255,255,.35);
+    }
+
+    /* ===== Modal ===== */
     .chat{
       position:fixed;
       right:16px;
       bottom:92px;
-      width: min(560px, calc(100vw - 24px));
-      height: min(760px, calc(100vh - 120px));
+      width:min(440px, calc(100vw - 32px));
+      height:min(720px, calc(100vh - 140px));
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border:1px solid var(--line);
       border-radius:18px;
       box-shadow: var(--shadow);
       overflow:hidden;
       display:none;
-      z-index:1000;
+      z-index:1100;
       backdrop-filter: blur(10px);
     }
     .chat.open{display:flex; flex-direction:column}
+
     .chatHeader{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      padding:14px 14px 12px;
+      padding:12px 14px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.12);
     }
-    .chatHeader .title{display:flex; flex-direction:column; gap:2px;}
-    .chatHeader .title strong{font-size:16px}
-    .chatHeader .title span{font-size:12px; color:var(--muted)}
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .title strong{font-size:15px}
+    .title span{font-size:12px; color:var(--muted)}
+
     .iconBtn{
       border:none;
       background:transparent;
@@ -96,31 +158,32 @@
     .iconBtn:hover{background: rgba(255,255,255,.06)}
     .iconBtn svg{width:20px;height:20px}
 
-    /* Top tabs */
+    /* ===== Tabs + Tools ===== */
     .tabs{
       display:flex;
       gap:10px;
-      padding:12px;
+      padding:10px 12px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.08);
-      flex-wrap:wrap;
       align-items:center;
+      justify-content:flex-start;
     }
     .tabBtn{
       border:1px solid var(--line);
       background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.85);
-      padding:10px 14px;
+      color: rgba(255,255,255,.88);
+      padding:8px 12px;
       border-radius:999px;
       cursor:pointer;
       font-weight:700;
+      font-size:13px;
     }
     .tabBtn.active{
-      background: rgba(92,108,255,.25);
-      border-color: rgba(92,108,255,.45);
+      background: rgba(92,108,255,.22);
+      border-color: rgba(92,108,255,.42);
     }
 
-    .toolsRow{
+    .chatTools{
       display:flex;
       gap:10px;
       padding:10px 12px;
@@ -130,7 +193,7 @@
       flex-wrap:wrap;
     }
     .tool{
-      display:flex;
+      display:inline-flex;
       gap:8px;
       align-items:center;
       padding:6px 10px;
@@ -143,59 +206,54 @@
     .tool select{
       background: transparent;
       border:none;
-      color: rgba(255,255,255,.85);
+      color: rgba(255,255,255,.9);
       outline:none;
       font-size:12px;
     }
     .tool button{
       background: transparent;
       border:none;
-      color: rgba(255,255,255,.85);
+      color: rgba(255,255,255,.9);
       cursor:pointer;
       font-size:12px;
     }
+    .tool button:hover{opacity:.85}
 
-    .panel{
+    /* ===== Body area ===== */
+    .chatBody{
       flex:1;
+      padding:12px;
       overflow:auto;
-      padding:14px 12px 10px;
     }
 
-    /* Chat UI */
-    .chatBody{min-height: 220px;}
     .msgRow{display:flex; margin:10px 0}
     .msgRow.user{justify-content:flex-end}
     .bubble{
-      max-width: 88%;
+      max-width: 85%;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--line);
-      background: rgba(255,255,255,.08);
+      background: var(--bubble);
       color: var(--text);
       line-height:1.45;
       white-space: pre-wrap;
       word-wrap: break-word;
-      font-size: 15px;
+      font-size: 14px;
     }
     .msgRow.user .bubble{
       background: rgba(92,108,255,.22);
       border-color: rgba(92,108,255,.35);
     }
-    .typing{display:inline-flex; gap:6px; align-items:center;}
-    .dot{
-      width:6px;height:6px;border-radius:999px;
-      background: rgba(255,255,255,.55);
-      animation: bounce 1s infinite ease-in-out;
-    }
-    .dot:nth-child(2){animation-delay:.15s}
-    .dot:nth-child(3){animation-delay:.3s}
-    @keyframes bounce{
-      0%, 80%, 100%{transform: translateY(0); opacity:.5}
-      40%{transform: translateY(-5px); opacity:1}
+
+    .hint{
+      text-align:center;
+      font-size:12px;
+      color: var(--muted);
+      padding: 0 12px 10px;
     }
 
-    .hint{text-align:center; font-size:12px; color: var(--muted); padding: 0 12px 10px;}
-    .footerRow{
+    /* ===== Footer (only for Chat tab) ===== */
+    .chatFooter{
       padding:12px;
       border-top:1px solid var(--line);
       background: rgba(0,0,0,.10);
@@ -214,9 +272,10 @@
       padding:10px 12px;
       background: rgba(0,0,0,.20);
       color: var(--text);
-      font-size:16px;
+      font-size:15px;
       line-height:1.35;
     }
+
     .sendBtn{
       border:none;
       cursor:pointer;
@@ -230,100 +289,91 @@
     }
     .sendBtn:disabled{opacity:.55; cursor:not-allowed}
 
-    /* Voice / Image UI */
-    .hTitle{font-size:34px; margin:2px 0 8px; font-weight:900;}
-    .sub{color: var(--muted); margin:0 0 14px; line-height:1.5;}
-    .block{
-      border:1px solid var(--line);
-      border-radius:16px;
-      background: rgba(255,255,255,.03);
-      padding:14px;
-      margin-bottom:12px;
+    /* ===== Voice / Image panels ===== */
+    .panel{
+      display:none;
     }
-    .row{display:flex; gap:10px; flex-wrap:wrap;}
-    .select{
-      flex:1;
-      min-width: 180px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      padding:10px 12px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background: rgba(0,0,0,.20);
-      color: rgba(255,255,255,.85);
+    .panel.active{
+      display:block;
     }
-    .select label{color: var(--muted); font-size:13px;}
-    .select select{
-      flex:1;
-      background: transparent;
-      border:none;
-      outline:none;
-      color: rgba(255,255,255,.92);
-      font-size:14px;
+    .panel h2{
+      margin:4px 0 6px;
+      font-size:22px;
+      letter-spacing:.2px;
     }
-    .status{
-      margin-top:10px;
-      color: rgba(255,255,255,.85);
-      font-size:14px;
-      white-space: pre-wrap;
-    }
-    .imgWrap img{
-      width:100%;
-      border-radius:14px;
-      border:1px solid var(--line);
-      margin-top:10px;
+    .panel p{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
     }
 
-    /* Floating 3 buttons */
-    .fabCol{
-      position:fixed;
-      right:16px;
-      bottom:18px;
+    .field{
       display:flex;
       flex-direction:column;
-      gap:12px;
-      z-index:1100;
+      gap:8px;
+      margin:10px 0 12px;
     }
-    .fab{
-      width:62px;
-      height:62px;
-      border-radius:999px;
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:420px){
+      .row2{grid-template-columns:1fr}
+    }
+
+    .selectLike{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      width:100%;
+    }
+
+    .actionBtn{
+      width:fit-content;
       border:none;
       cursor:pointer;
-      background: radial-gradient(60px 60px at 35% 30%, #8894ff 0%, var(--btn) 40%, #2b34b5 100%);
-      box-shadow: var(--shadow);
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      padding:12px 16px;
+      border-radius:14px;
+      background: linear-gradient(180deg, var(--btn), var(--btn2));
       color:white;
+      font-weight:900;
+      box-shadow: 0 10px 20px rgba(92,108,255,.18);
     }
-    .fab svg{width:28px;height:28px}
-    .fab:active{transform: translateY(1px)}
-/* ===== FIX: font smaller & better mobile ===== */
-.bubble{ font-size: 14px; line-height: 1.35; }
-textarea{ font-size: 15px; }
-.hTitle{ font-size: 26px; }
-.sub{ font-size: 13px; }
-.select select{ font-size: 13px; }
-.sendBtn{ padding: 11px 14px; min-width: 86px; }
 
-/* ===== FIX: floating buttons do not block popup ===== */
-.fabCol{
-  right: 12px;
-  bottom: 12px;
-  gap: 10px;
-}
-.fab{
-  width: 54px;
-  height: 54px;
-}
+    .statusBox{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.9);
+      font-size:13px;
+      line-height:1.45;
+    }
 
-/* When popup is open, move fabs away (or hide) */
-.chat.open ~ .fabCol { 
-  opacity: 0.0;
-  pointer-events: none;
-}
+    .imgOut{
+      margin-top:12px;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+    }
+    .imgOut img{
+      width:100%;
+      display:block;
+    }
+
+    audio{
+      width:100%;
+      margin-top:10px;
+    }
   </style>
 </head>
 
@@ -332,8 +382,8 @@ textarea{ font-size: 15px; }
     <div class="hero">
       <h1>SAK AI Studio Demo</h1>
       <p>
-        AI platform demo for Voice, Chat & Image. This is an early-stage prototype designed for testing and evaluation.
-        Use floating buttons to open Chat / Voice / Image.
+        AI platform demo for Chat, Voice (Google TTS) & Image (Imagen). This is an early-stage prototype designed for testing and evaluation.
+        Use floating buttons to open tools.
       </p>
       <div class="pill">✅ Deployed on Railway • ✅ Connected to Gemini API</div>
     </div>
@@ -345,26 +395,24 @@ textarea{ font-size: 15px; }
       </div>
       <div class="card">
         <h3>Voice AI (TTS)</h3>
-        <p>English + Khmer • Male/Female • Generates MP3 and plays inside the app.</p>
+        <p>Convert text into natural voice using Google Cloud Text-to-Speech (supports English & Khmer).</p>
       </div>
       <div class="card">
         <h3>Image Generator</h3>
-        <p>Uses Imagen endpoint (predict) and returns a PNG data URL.</p>
+        <p>Generate images from text prompts using Imagen. Supports long prompts with auto-simplify.</p>
       </div>
     </div>
   </div>
 
-  <!-- Floating 3 buttons -->
-  <div class="fabCol" aria-label="Floating actions">
-    <button class="fab" id="fabChat" aria-label="Open Chat">
-      <!-- chat icon -->
+  <!-- Floating Buttons -->
+  <div class="fabStack">
+    <button class="fab" id="fabChat" aria-label="Open chat" title="Chat">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
     </button>
 
-    <button class="fab" id="fabVoice" aria-label="Open Voice">
-      <!-- mic icon -->
+    <button class="fab" id="fabVoice" aria-label="Open voice" title="Voice">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.8"/>
         <path d="M19 11a7 7 0 0 1-14 0" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
@@ -372,24 +420,24 @@ textarea{ font-size: 15px; }
       </svg>
     </button>
 
-    <button class="fab" id="fabImage" aria-label="Open Image">
-      <!-- image icon -->
+    <button class="fab" id="fabImage" aria-label="Open image" title="Image">
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 6.5C4 5.12 5.12 4 6.5 4h11C18.88 4 20 5.12 20 6.5v11c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 20 4 18.88 4 17.5v-11Z" stroke="white" stroke-width="1.8"/>
-        <path d="M8 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="white"/>
-        <path d="M4.5 18l6-6 3.5 3.5 2.5-2.5 3.5 3.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 7.5C4 6.12 5.12 5 6.5 5h11C18.88 5 20 6.12 20 7.5v9c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 19 4 17.88 4 16.5v-9Z" stroke="white" stroke-width="1.8"/>
+        <path d="M8 13l2.2-2.2a1 1 0 0 1 1.4 0L16 15.2" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M8.2 16.2l1.4-1.4a1 1 0 0 1 1.4 0L12 15.8" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="9" cy="9" r="1.2" fill="white"/>
       </svg>
     </button>
   </div>
 
-  <!-- Popup -->
-  <div class="chat" id="chat">
+  <!-- Modal -->
+  <div class="chat" id="modal">
     <div class="chatHeader">
       <div class="title">
         <strong>SAK AI Studio</strong>
         <span>Chat • Voice • Image</span>
       </div>
-      <button class="iconBtn" id="closeChat" aria-label="Close">
+      <button class="iconBtn" id="closeModal" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M6 6l12 12M18 6 6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -397,12 +445,12 @@ textarea{ font-size: 15px; }
     </div>
 
     <div class="tabs">
-      <button class="tabBtn active" id="tabChat">Chat</button>
-      <button class="tabBtn" id="tabVoice">Voice AI</button>
-      <button class="tabBtn" id="tabImage">Image</button>
+      <button class="tabBtn active" id="tabChat" type="button">Chat</button>
+      <button class="tabBtn" id="tabVoice" type="button">Voice AI</button>
+      <button class="tabBtn" id="tabImage" type="button">Image</button>
     </div>
 
-    <div class="toolsRow">
+    <div class="chatTools">
       <div class="tool">
         Answer:
         <select id="answerLen">
@@ -425,85 +473,89 @@ textarea{ font-size: 15px; }
       </div>
     </div>
 
-    <!-- Panels -->
-    <div class="panel" id="panelChat">
-      <div class="chatBody" id="chatBody"></div>
-      <div class="hint">Tip: Enter to send • Shift+Enter for new line</div>
-      <div class="footerRow">
-        <textarea id="input" placeholder="Type a message..."></textarea>
-        <button class="sendBtn" id="sendBtn">Send</button>
+    <div class="chatBody" id="body">
+      <!-- CHAT PANEL -->
+      <div class="panel active" id="panelChat">
+        <div id="chatBody"></div>
+      </div>
+
+      <!-- VOICE PANEL -->
+      <div class="panel" id="panelVoice">
+        <h2>Voice AI (Text-to-Speech)</h2>
+        <p>Type text → choose language & gender → generate voice.</p>
+
+        <div class="field">
+          <textarea id="ttsInput" placeholder="Type text for voice...">Hello! I'm SAK AI Studio assistant.</textarea>
+        </div>
+
+        <div class="row2">
+          <select class="selectLike" id="ttsLang">
+            <option value="en-US" selected>English (en-US)</option>
+            <option value="km-KH">Khmer (km-KH)</option>
+          </select>
+
+          <select class="selectLike" id="ttsGender">
+            <option value="FEMALE" selected>Female</option>
+            <option value="MALE">Male</option>
+          </select>
+        </div>
+
+        <div class="row2" style="margin-top:10px;">
+          <select class="selectLike" id="ttsType">
+            <option value="neural" selected>Neural (Best)</option>
+            <option value="standard">Standard</option>
+          </select>
+          <div></div>
+        </div>
+
+        <button class="actionBtn" id="ttsBtn" type="button">Generate Voice</button>
+
+        <div class="statusBox" id="ttsStatus" style="display:none;"></div>
+        <audio id="ttsAudio" controls style="display:none;"></audio>
+      </div>
+
+      <!-- IMAGE PANEL -->
+      <div class="panel" id="panelImage">
+        <h2>Image Generator</h2>
+        <p>Type a prompt → generate image. Long prompts are auto-simplified if needed.</p>
+
+        <div class="field">
+          <textarea id="imgPrompt" placeholder="Type prompt for image...">cute cat, cinematic lighting, shallow depth of field, 50mm photo</textarea>
+        </div>
+
+        <div class="row2">
+          <select class="selectLike" id="imgAspect">
+            <option value="1:1" selected>Aspect: 1:1</option>
+            <option value="16:9">Aspect: 16:9</option>
+            <option value="9:16">Aspect: 9:16</option>
+            <option value="4:3">Aspect: 4:3</option>
+            <option value="3:4">Aspect: 3:4</option>
+          </select>
+          <div></div>
+        </div>
+
+        <button class="actionBtn" id="imgBtn" type="button">Generate Image</button>
+
+        <div class="statusBox" id="imgStatus" style="display:none;"></div>
+        <div class="imgOut" id="imgOut" style="display:none;">
+          <img id="imgResult" alt="Generated"/>
+        </div>
       </div>
     </div>
 
-    <div class="panel" id="panelVoice" style="display:none;">
-      <div class="hTitle">Voice AI (Text-to-Speech)</div>
-      <p class="sub">Type text → choose language & gender → generate voice → play audio.</p>
+    <div class="hint">Tip: Chat = Enter to send • Shift+Enter new line</div>
 
-      <div class="block">
-        <textarea id="ttsText" placeholder="Type text for TTS...">Hello! I'm SAK AI Studio assistant. How can I help you today?</textarea>
-
-        <div class="row" style="margin-top:10px;">
-          <div class="select">
-            <label>Language:</label>
-            <select id="ttsLang">
-              <option value="en-US" selected>English (en-US)</option>
-              <option value="km-KH">Khmer (km-KH)</option>
-            </select>
-          </div>
-
-          <div class="select">
-            <label>Gender:</label>
-            <select id="ttsGender">
-              <option value="FEMALE" selected>Female</option>
-              <option value="MALE">Male</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <button class="sendBtn" id="ttsBtn" type="button">Generate Voice</button>
-        </div>
-
-        <div class="status" id="ttsStatus"></div>
-
-        <audio id="ttsAudio" controls style="width:100%; margin-top:10px;"></audio>
-      </div>
-    </div>
-
-    <div class="panel" id="panelImage" style="display:none;">
-      <div class="hTitle">Image Generator</div>
-      <p class="sub">Type a prompt → generate image (Imagen endpoint).</p>
-
-      <div class="block">
-        <textarea id="imgPrompt" placeholder="Example: cute cat, cinematic lighting, 9:16">cute cat</textarea>
-
-        <div class="row" style="margin-top:10px;">
-          <div class="select">
-            <label>Aspect:</label>
-            <select id="imgAspect">
-              <option value="1:1" selected>1:1</option>
-              <option value="9:16">9:16</option>
-              <option value="16:9">16:9</option>
-              <option value="3:4">3:4</option>
-              <option value="4:3">4:3</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:12px;">
-          <button class="sendBtn" id="imgBtn" type="button">Generate Image</button>
-        </div>
-
-        <div class="status" id="imgStatus"></div>
-
-        <div class="imgWrap" id="imgWrap"></div>
-      </div>
+    <!-- Chat Footer (only useful for chat) -->
+    <div class="chatFooter" id="chatFooter">
+      <textarea id="chatInput" placeholder="Type a message..."></textarea>
+      <button class="sendBtn" id="sendBtn" type="button">Send</button>
     </div>
   </div>
 
   <script>
-    const chat = document.getElementById("chat");
-    const closeChat = document.getElementById("closeChat");
+    // ===== Elements =====
+    const modal = document.getElementById("modal");
+    const closeModal = document.getElementById("closeModal");
 
     const fabChat = document.getElementById("fabChat");
     const fabVoice = document.getElementById("fabVoice");
@@ -521,98 +573,79 @@ textarea{ font-size: 15px; }
     const memoryMode = document.getElementById("memoryMode");
     const clearAll = document.getElementById("clearAll");
 
-    // Chat elements
-    const chatBody = document.getElementById("chatBody");
-    const input = document.getElementById("input");
+    const chatBodyWrap = document.getElementById("chatBody");
+    const chatInput = document.getElementById("chatInput");
     const sendBtn = document.getElementById("sendBtn");
+    const chatFooter = document.getElementById("chatFooter");
 
-    // TTS elements
-    const ttsText = document.getElementById("ttsText");
+    // Voice
+    const ttsInput = document.getElementById("ttsInput");
     const ttsLang = document.getElementById("ttsLang");
     const ttsGender = document.getElementById("ttsGender");
+    const ttsType = document.getElementById("ttsType");
     const ttsBtn = document.getElementById("ttsBtn");
     const ttsStatus = document.getElementById("ttsStatus");
     const ttsAudio = document.getElementById("ttsAudio");
 
-    // Image elements
+    // Image
     const imgPrompt = document.getElementById("imgPrompt");
     const imgAspect = document.getElementById("imgAspect");
     const imgBtn = document.getElementById("imgBtn");
     const imgStatus = document.getElementById("imgStatus");
-    const imgWrap = document.getElementById("imgWrap");
+    const imgOut = document.getElementById("imgOut");
+    const imgResult = document.getElementById("imgResult");
 
-    // Local memory
-    let history = [];
-    
-    function clearAllInputs() {
-  // Chat input
-  const chatInput = document.getElementById("input");
-  if (chatInput) chatInput.value = "";
+    // ===== State =====
+    let history = []; // {role:"user"|"assistant", text:"..."}
+    let activeTab = "chat";
 
-  // Voice input (ប្តូរឈ្មោះ id តាមរបស់បង)
-  const ttsInput = document.getElementById("ttsInput");
-  if (ttsInput) ttsInput.value = "";
-
-  // Image input (ប្តូរឈ្មោះ id តាមរបស់បង)
-  const imgInput = document.getElementById("imgPrompt");
-  if (imgInput) imgInput.value = "";
-}
-
-function focusActiveTab(tab) {
-  if (tab === "chat") document.getElementById("input")?.focus();
-  if (tab === "voice") document.getElementById("ttsInput")?.focus();
-  if (tab === "image") document.getElementById("imgPrompt")?.focus();
-}
-   
-    function openPopup(which) {
-      chat.classList.add("open");
-      setTab(which || "chat");
-      setTimeout(() => {
-        if (which === "voice") ttsText.focus();
-        else if (which === "image") imgPrompt.focus();
-        else input.focus();
-      }, 50);
+    // ===== Utils =====
+    function openModal() {
+      modal.classList.add("open");
+      setTimeout(() => focusActiveInput(), 80);
     }
-    function closePopup() {
-      chat.classList.remove("open");
+    function closeModalFn() {
+      modal.classList.remove("open");
+      fabChat.dataset.active = "0";
+      fabVoice.dataset.active = "0";
+      fabImage.dataset.active = "0";
     }
 
-    closeChat.addEventListener("click", closePopup);
-    fabChat.addEventListener("click", () => openPopup("chat"));
-    fabVoice.addEventListener("click", () => openPopup("voice"));
-    fabImage.addEventListener("click", () => openPopup("image"));
-
-    function setActive(btn) {
-      [tabChat, tabVoice, tabImage].forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+    function setActiveFab(which){
+      fabChat.dataset.active = which === "chat" ? "1" : "0";
+      fabVoice.dataset.active = which === "voice" ? "1" : "0";
+      fabImage.dataset.active = which === "image" ? "1" : "0";
     }
 
-    function setTab(which) {
-      panelChat.style.display = "none";
-      panelVoice.style.display = "none";
-      panelImage.style.display = "none";
-
-      if (which === "voice") {
-        setActive(tabVoice);
-        panelVoice.style.display = "block";
-      } else if (which === "image") {
-        setActive(tabImage);
-        panelImage.style.display = "block";
-      } else {
-        setActive(tabChat);
-        panelChat.style.display = "block";
-      }
+    function focusActiveInput(){
+      if(activeTab === "chat") chatInput.focus();
+      if(activeTab === "voice") ttsInput.focus();
+      if(activeTab === "image") imgPrompt.focus();
     }
 
-    tabChat.addEventListener("click", () => setTab("chat"));
-    tabVoice.addEventListener("click", () => setTab("voice"));
-    tabImage.addEventListener("click", () => setTab("image"));
+    function setTab(which){
+      activeTab = which;
+      tabChat.classList.toggle("active", which==="chat");
+      tabVoice.classList.toggle("active", which==="voice");
+      tabImage.classList.toggle("active", which==="image");
 
-    function scrollToBottom() {
-      chatBody.scrollTop = chatBody.scrollHeight;
+      panelChat.classList.toggle("active", which==="chat");
+      panelVoice.classList.toggle("active", which==="voice");
+      panelImage.classList.toggle("active", which==="image");
+
+      // Show footer only for chat
+      chatFooter.style.display = (which==="chat") ? "flex" : "none";
+
+      setActiveFab(which);
+      setTimeout(() => focusActiveInput(), 60);
     }
 
-    function addMessage(role, text) {
+    function scrollToBottom(){
+      const body = document.getElementById("body");
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function addMessage(role, text){
       const row = document.createElement("div");
       row.className = "msgRow " + (role === "user" ? "user" : "assistant");
 
@@ -621,196 +654,240 @@ function focusActiveTab(tab) {
       bubble.textContent = text;
 
       row.appendChild(bubble);
-      chatBody.appendChild(row);
+      chatBodyWrap.appendChild(row);
       scrollToBottom();
     }
 
-    function addTyping() {
+    function addTyping(){
       const row = document.createElement("div");
       row.className = "msgRow assistant";
       row.id = "typingRow";
 
       const bubble = document.createElement("div");
       bubble.className = "bubble";
+      bubble.textContent = "Thinking...";
 
-      const typing = document.createElement("div");
-      typing.className = "typing";
-      typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-
-      bubble.appendChild(typing);
       row.appendChild(bubble);
-      chatBody.appendChild(row);
+      chatBodyWrap.appendChild(row);
       scrollToBottom();
     }
 
-    function removeTyping() {
+    function removeTyping(){
       const row = document.getElementById("typingRow");
-      if (row) row.remove();
+      if(row) row.remove();
     }
 
-    function buildPrompt(userText) {
-  const len = answerLen.value;
+    function buildPrompt(userText){
+      const len = answerLen.value;
 
-  // If user message is very short (hi/ok/yes), don't force steps/examples
-  const tiny = userText.trim().length <= 10;
+      let styleRule = "";
+      if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
+      if (len === "medium") styleRule = "Answer clearly with steps and 1 example. Use simple language.";
+      if (len === "long") styleRule = "Answer in detail with sections, steps, and 2-3 examples.";
 
-  let styleRule = "";
-  if (tiny) {
-    styleRule = "Reply naturally and helpfully. Ask 1 short question to understand what the user wants.";
-  } else if (len === "short") {
-    styleRule = "Answer concisely in 3-6 sentences.";
-  } else if (len === "medium") {
-    styleRule = "Answer clearly with bullets/steps when helpful and include one short example only if needed.";
-  } else {
-    styleRule = "Answer in detail with sections, steps, and multiple examples.";
-  }
-
-  return `System: You are SAK AI Studio assistant. Be clear and practical.\nInstruction: ${styleRule}\n\nUser: ${userText}`;
-}
-
-    async function safeJsonFetch(url, payload) {
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const ct = (r.headers.get("content-type") || "").toLowerCase();
-      const txt = await r.text();
-
-      if (!ct.includes("application/json")) {
-        // prevent "Unexpected token <"
-        throw new Error("Server returned non-JSON. " + txt.slice(0, 180));
-      }
-      const data = JSON.parse(txt);
-      return data;
+      return `Follow these rules:\n- ${styleRule}\n- If user writes Khmer, answer Khmer.\n\nUser: ${userText}`;
     }
 
-    async function sendMessage() {
-      const raw = input.value.trim();
-      if (!raw) return;
+    function cleanPrompt(s, max=900){
+      s = String(s||"").trim().replace(/\s+/g," ");
+      if(s.length > max) s = s.slice(0, max);
+      return s;
+    }
 
-      input.value = "";
+    function showBox(el, msg){
+      el.style.display = "block";
+      el.textContent = msg;
+    }
+    function hideBox(el){
+      el.style.display = "none";
+      el.textContent = "";
+    }
+
+    // ===== Events =====
+    fabChat.addEventListener("click", () => { openModal(); setTab("chat"); });
+    fabVoice.addEventListener("click", () => { openModal(); setTab("voice"); });
+    fabImage.addEventListener("click", () => { openModal(); setTab("image"); });
+
+    closeModal.addEventListener("click", closeModalFn);
+
+    tabChat.addEventListener("click", () => setTab("chat"));
+    tabVoice.addEventListener("click", () => setTab("voice"));
+    tabImage.addEventListener("click", () => setTab("image"));
+
+    clearAll.addEventListener("click", () => {
+      // clear chat
+      chatBodyWrap.innerHTML = "";
+      history = [];
+      addMessage("assistant", "Hello! How can I help you today?");
+      // clear voice + image status
+      hideBox(ttsStatus);
+      ttsAudio.style.display="none";
+      ttsAudio.src="";
+      hideBox(imgStatus);
+      imgOut.style.display="none";
+      imgResult.src="";
+    });
+
+    // ===== CHAT =====
+    async function sendChat(){
+      const raw = chatInput.value.trim();
+      if(!raw) return;
+
+      // auto-clear textbox after send
+      chatInput.value = "";
+
       sendBtn.disabled = true;
-
       addMessage("user", raw);
-      history.push({ role: "user", text: raw });
+      history.push({ role:"user", text: raw });
 
       addTyping();
 
-      try {
+      try{
         const payload = {
           message: buildPrompt(raw),
           history: memoryMode.value === "on" ? history.slice(-12) : []
         };
 
-        const data = await safeJsonFetch("/chat", payload);
+        const r = await fetch("/chat", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await r.json();
         const reply = (data && data.reply) ? String(data.reply) : "No response";
 
         removeTyping();
         addMessage("assistant", reply);
-        history.push({ role: "assistant", text: reply });
+        history.push({ role:"assistant", text: reply });
 
-      } catch (e) {
+      } catch(e){
         removeTyping();
-        addMessage("assistant", "Error: " + e.message);
+        addMessage("assistant", "Network/Server error: " + e.message);
       } finally {
         sendBtn.disabled = false;
-        input.focus();
+        focusActiveInput();
       }
     }
 
-    sendBtn.addEventListener("click", sendMessage);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+    sendBtn.addEventListener("click", sendChat);
+    chatInput.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" && !e.shiftKey){
         e.preventDefault();
-        sendMessage();
+        sendChat();
       }
     });
 
-    clearAll.addEventListener("click", () => {
-      // Clear all panels
-      chatBody.innerHTML = "";
-      history = [];
-      addMessage("assistant", "Hello! How can I help you today?");
-      ttsStatus.textContent = "";
-      ttsAudio.removeAttribute("src");
-      imgStatus.textContent = "";
-      imgWrap.innerHTML = "";
-    });
+    // ===== VOICE =====
+    async function doTTS(){
+      const text = ttsInput.value.trim();
+      if(!text){
+        showBox(ttsStatus, "Please type text.");
+        return;
+      }
 
-    // ===== TTS =====
-    ttsBtn.addEventListener("click", async () => {
-      const text = ttsText.value.trim();
-      if (!text) return;
+      hideBox(ttsStatus);
+      ttsAudio.style.display="none";
+      ttsAudio.src = "";
 
       ttsBtn.disabled = true;
-      ttsStatus.textContent = "Generating voice...";
+      showBox(ttsStatus, "Generating voice...");
 
-      try {
-        const data = await safeJsonFetch("/tts", {
-          text,
+      try{
+        const payload = {
+          text: text,
           languageCode: ttsLang.value,
-          gender: ttsGender.value
+          gender: ttsGender.value,
+          voiceType: ttsType.value
+        };
+
+        const r = await fetch("/tts", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
         });
 
-        if (data.error) {
-          ttsStatus.textContent = "Error: " + data.error;
+        const data = await r.json();
+        if(data.error){
+          showBox(ttsStatus, "Error: " + data.error);
           return;
         }
 
-        if (!data.audioUrl) {
-          ttsStatus.textContent = "Error: No audioUrl returned";
+        if(!data.audioUrl){
+          showBox(ttsStatus, "Error: No audioUrl returned.");
           return;
         }
 
+        // auto-clear textbox after generate
+        ttsInput.value = "";
+
+        showBox(ttsStatus, "✅ Done" + (data.voiceName ? (" • " + data.voiceName) : ""));
         ttsAudio.src = data.audioUrl;
-        ttsStatus.textContent = `✅ Voice: ${data.voiceName || "selected"}`;
-        ttsAudio.play().catch(() => {});
-      } catch (e) {
-        ttsStatus.textContent = "Error: " + e.message;
+        ttsAudio.style.display = "block";
+        ttsAudio.play().catch(()=>{});
+
+      } catch(e){
+        showBox(ttsStatus, "Error: " + e.message);
       } finally {
         ttsBtn.disabled = false;
+        focusActiveInput();
       }
-    });
+    }
+
+    ttsBtn.addEventListener("click", doTTS);
 
     // ===== IMAGE =====
-    imgBtn.addEventListener("click", async () => {
-      const prompt = imgPrompt.value.trim();
-      if (!prompt) return;
+    async function doImage(){
+      const p = cleanPrompt(imgPrompt.value, 900);
+      if(!p){
+        showBox(imgStatus, "Please type a prompt.");
+        return;
+      }
+
+      hideBox(imgStatus);
+      imgOut.style.display = "none";
+      imgResult.src = "";
 
       imgBtn.disabled = true;
-      imgStatus.textContent = "Generating image...";
-      imgWrap.innerHTML = "";
+      showBox(imgStatus, "Generating image...");
 
-      try {
-        const data = await safeJsonFetch("/image", {
-          prompt,
-          aspectRatio: imgAspect.value
+      try{
+        const payload = { prompt: p, aspectRatio: imgAspect.value };
+
+        const r = await fetch("/image", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
         });
 
-        if (data.error) {
-          imgStatus.textContent = "Error: " + data.error;
+        const data = await r.json();
+        if(data.error){
+          showBox(imgStatus, "Error: " + data.error);
           return;
         }
 
-        if (!data.imageDataUrl) {
-          imgStatus.textContent = "Error: No image data returned";
+        if(!data.imageDataUrl){
+          showBox(imgStatus, "Error: No image data returned.");
           return;
         }
 
-        const img = document.createElement("img");
-        img.src = data.imageDataUrl;
-        img.alt = "Generated image";
-        imgWrap.appendChild(img);
+        // auto-clear textbox after generate
+        imgPrompt.value = "";
 
-        imgStatus.textContent = "✅ Done";
-      } catch (e) {
-        imgStatus.textContent = "Error: " + e.message;
+        showBox(imgStatus, "✅ Done");
+        imgResult.src = data.imageDataUrl;
+        imgOut.style.display = "block";
+        scrollToBottom();
+
+      } catch(e){
+        showBox(imgStatus, "Error: " + e.message);
       } finally {
         imgBtn.disabled = false;
+        focusActiveInput();
       }
-    });
+    }
+
+    imgBtn.addEventListener("click", doImage);
 
     // Initial greeting
     addMessage("assistant", "Hello! How can I help you today?");
