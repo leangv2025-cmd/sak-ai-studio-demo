@@ -50,12 +50,11 @@
     .card h3{margin:0 0 6px; font-size:18px}
     .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
 
-    /* Floating buttons group */
+    /* Floating buttons */
     .fabCol{
       position:fixed; right:16px; bottom:18px;
       display:flex; flex-direction:column; gap:12px;
-      z-index:999;
-      align-items:flex-end;
+      z-index:999; align-items:flex-end;
     }
     .fab{
       width:62px; height:62px; border-radius:999px; border:none; cursor:pointer;
@@ -177,7 +176,6 @@
     }
     .sendBtn:disabled{opacity:.55; cursor:not-allowed}
 
-    /* Panels */
     .panel{
       border:1px solid var(--line);
       border-radius:16px;
@@ -234,13 +232,13 @@
     <div class="hero">
       <h1>SAK AI Studio Demo</h1>
       <p>Use the floating buttons to open Chat / Voice / Image.</p>
-      <div class="pill">✅ Deployed on Railway • ✅ Connected to Gemini API</div>
+      <div class="pill">✅ Deployed on Railway • ✅ Connected</div>
     </div>
 
     <div class="grid">
       <div class="card">
         <h3>AI Assistant</h3>
-        <p>Ask questions, brainstorm ideas, write content, and get structured answers.</p>
+        <p>Chat with Gemini.</p>
       </div>
       <div class="card">
         <h3>Voice AI (TTS)</h3>
@@ -248,12 +246,11 @@
       </div>
       <div class="card">
         <h3>Image Generator</h3>
-        <p>Generate images from text prompts using Gemini image endpoint.</p>
+        <p>Generate images from prompts.</p>
       </div>
     </div>
   </div>
 
-  <!-- Floating buttons -->
   <div class="fabCol">
     <button class="fab small" id="fabImage" aria-label="Open Image">
       <svg viewBox="0 0 24 24" fill="none">
@@ -278,7 +275,6 @@
     </button>
   </div>
 
-  <!-- Popup -->
   <div class="chat" id="chat">
     <div class="chatHeader">
       <div class="title">
@@ -320,7 +316,6 @@
     </div>
 
     <div class="chatBody" id="chatBody"></div>
-
     <div class="hint" id="hint">Tip: Press Enter to send • Shift+Enter for new line</div>
 
     <div class="chatFooter" id="chatFooter">
@@ -330,7 +325,6 @@
   </div>
 
   <script>
-    // ---------- ELEMENTS ----------
     var chat = document.getElementById("chat");
     var closeChat = document.getElementById("closeChat");
     var chatBody = document.getElementById("chatBody");
@@ -342,7 +336,8 @@
     var hint = document.getElementById("hint");
     var chatFooter = document.getElementById("chatFooter");
 
-    var tabChat = document.getElementById("tabChat");
+    var tabChat = document.get/ElementById ? null : null; // (avoid parse issue)
+    tabChat = document.getElementById("tabChat");
     var tabVoice = document.getElementById("tabVoice");
     var tabImage = document.getElementById("tabImage");
 
@@ -356,7 +351,7 @@
     function openChat(tab) {
       chat.classList.add("open");
       switchTab(tab || "chat");
-      setTimeout(function(){ input && input.focus(); }, 80);
+      setTimeout(function(){ if (input) input.focus(); }, 80);
     }
     function closeChatPopup() { chat.classList.remove("open"); }
 
@@ -391,10 +386,7 @@
       row.id = "typingRow";
       var bubble = document.createElement("div");
       bubble.className = "bubble";
-      var typing = document.createElement("div");
-      typing.className = "typing";
-      typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-      bubble.appendChild(typing);
+      bubble.innerHTML = "…";
       row.appendChild(bubble);
       chatBody.appendChild(row);
       scrollToBottom();
@@ -450,16 +442,14 @@
           body: JSON.stringify(payload)
         });
 
-        var reply = String(data.reply || "No response");
         removeTyping();
-        addMessage("assistant", reply);
-        history.push({ role:"assistant", text: reply });
+        addMessage("assistant", String(data.reply || "No response"));
       } catch(e){
         removeTyping();
         addMessage("assistant", "Error: " + e.message);
       } finally {
         sendBtn.disabled = false;
-        input.focus();
+        if (input) input.focus();
       }
     }
 
@@ -475,86 +465,49 @@
       }
     });
 
-    // ---------- RENDER VOICE PANEL (WITH SELECTORS) ----------
+    function renderChatTab(){
+      chatBody.innerHTML = "";
+      hint.style.display = "block";
+      chatFooter.style.display = "flex";
+      addMessage("assistant", "Hello! How can I help you today?");
+    }
+
     function renderVoicePanel(){
       chatBody.innerHTML = "";
+      hint.style.display = "none";
+      chatFooter.style.display = "none";
 
       var wrap = document.createElement("div");
       wrap.className = "panel";
-
-      var h3 = document.createElement("h3");
-      h3.textContent = "Voice AI (Text-to-Speech)";
-      wrap.appendChild(h3);
-
-      var p = document.createElement("p");
-      p.textContent = "Choose Language + Gender → Generate Voice → Play audio.";
-      wrap.appendChild(p);
-
-      var row1 = document.createElement("div");
-      row1.className = "row";
-
-      var fLang = document.createElement("div");
-      fLang.className = "field";
-      fLang.innerHTML = '<label>Language</label>';
-      var selLang = document.createElement("select");
-      selLang.id = "ttsLang";
-      selLang.innerHTML =
-        '<option value="en-US">English (en-US)</option>' +
-        '<option value="km-KH">Khmer (km-KH)</option>';
-      fLang.appendChild(selLang);
-
-      var fGender = document.createElement("div");
-      fGender.className = "field";
-      fGender.innerHTML = '<label>Gender</label>';
-      var selGender = document.createElement("select");
-      selGender.id = "ttsGender";
-      selGender.innerHTML =
-        '<option value="FEMALE" selected>Female</option>' +
-        '<option value="MALE">Male</option>';
-      fGender.appendChild(selGender);
-
-      row1.appendChild(fLang);
-      row1.appendChild(fGender);
-      wrap.appendChild(row1);
-
-      var row2 = document.createElement("div");
-      row2.className = "row";
-      var fText = document.createElement("div");
-      fText.className = "field";
-      fText.innerHTML = '<label>Text</label>';
-      var inText = document.createElement("input");
-      inText.id = "ttsText";
-      inText.value = "Hello! I'm SAK AI Studio assistant.";
-      fText.appendChild(inText);
-      row2.appendChild(fText);
-      wrap.appendChild(row2);
-
-      var btn = document.createElement("button");
-      btn.className = "btnBig";
-      btn.id = "btnTts";
-      btn.textContent = "Generate Voice";
-      wrap.appendChild(btn);
-
-      var status = document.createElement("div");
-      status.className = "statusBox";
-      status.id = "ttsStatus";
-      status.textContent = "Ready.";
-      wrap.appendChild(status);
-
-      var audioBox = document.createElement("div");
-      audioBox.className = "statusBox";
-      audioBox.style.padding = "12px";
-      var audio = document.createElement("audio");
-      audio.id = "ttsAudio";
-      audio.controls = true;
-      audio.style.width = "100%";
-      audioBox.appendChild(audio);
-      wrap.appendChild(audioBox);
+      wrap.innerHTML =
+        '<h3>Voice AI (Text-to-Speech)</h3>' +
+        '<p>Choose Language + Gender → Generate Voice → Play.</p>' +
+        '<div class="row">' +
+          '<div class="field"><label>Language</label>' +
+            '<select id="ttsLang">' +
+              '<option value="en-US">English (en-US)</option>' +
+              '<option value="km-KH">Khmer (km-KH)</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="field"><label>Gender</label>' +
+            '<select id="ttsGender">' +
+              '<option value="FEMALE" selected>Female</option>' +
+              '<option value="MALE">Male</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div class="row">' +
+          '<div class="field"><label>Text</label>' +
+            '<input id="ttsText" value="Hello! I am SAK AI Studio assistant." />' +
+          '</div>' +
+        '</div>' +
+        '<button class="btnBig" id="btnTts">Generate Voice</button>' +
+        '<div class="statusBox" id="ttsStatus">Ready.</div>' +
+        '<div class="statusBox" style="padding:12px"><audio id="ttsAudio" controls style="width:100%"></audio></div>';
 
       chatBody.appendChild(wrap);
 
-      btn.addEventListener("click", runTts);
-      scrollToBottom();
+      document.getElementById("btnTts").addEventListener("click", runTts);
     }
 
     async function runTts(){
@@ -577,66 +530,35 @@
         });
 
         audio.src = "data:audio/mp3;base64," + data.audioContent;
-        status.textContent = "Done. Voice: " + (data.voiceUsed || "Auto");
+        status.textContent = "Done: " + (data.voiceUsed || "");
         audio.play().catch(function(){});
       } catch(e){
         status.textContent = "Error: " + e.message;
       }
     }
 
-    // ---------- RENDER IMAGE PANEL ----------
     function renderImagePanel(){
       chatBody.innerHTML = "";
+      hint.style.display = "none";
+      chatFooter.style.display = "none";
 
       var wrap = document.createElement("div");
       wrap.className = "panel";
-
-      var h3 = document.createElement("h3");
-      h3.textContent = "Image Generator";
-      wrap.appendChild(h3);
-
-      var p = document.createElement("p");
-      p.textContent = "Type prompt → generate image.";
-      wrap.appendChild(p);
-
-      var row = document.createElement("div");
-      row.className = "row";
-
-      var f = document.createElement("div");
-      f.className = "field";
-      f.innerHTML = "<label>Prompt</label>";
-      var inp = document.createElement("input");
-      inp.id = "imgPrompt";
-      inp.placeholder = "e.g., cute chicken on a grill, cinematic lighting";
-      f.appendChild(inp);
-      row.appendChild(f);
-      wrap.appendChild(row);
-
-      var btn = document.createElement("button");
-      btn.className = "btnBig";
-      btn.id = "btnImg";
-      btn.textContent = "Generate Image";
-      wrap.appendChild(btn);
-
-      var status = document.createElement("div");
-      status.className = "statusBox";
-      status.id = "imgStatus";
-      status.textContent = "Ready.";
-      wrap.appendChild(status);
-
-      var out = document.createElement("div");
-      out.className = "imgOut";
-      out.id = "imgOut";
-      var img = document.createElement("img");
-      img.id = "imgEl";
-      img.alt = "Generated image";
-      out.appendChild(img);
-      wrap.appendChild(out);
+      wrap.innerHTML =
+        '<h3>Image Generator</h3>' +
+        '<p>Type prompt → generate image.</p>' +
+        '<div class="row">' +
+          '<div class="field"><label>Prompt</label>' +
+            '<input id="imgPrompt" placeholder="e.g., chicken on grill, cinematic lighting" />' +
+          '</div>' +
+        '</div>' +
+        '<button class="btnBig" id="btnImg">Generate Image</button>' +
+        '<div class="statusBox" id="imgStatus">Ready.</div>' +
+        '<div class="imgOut" id="imgOut"><img id="imgEl" alt="Generated image"/></div>';
 
       chatBody.appendChild(wrap);
 
-      btn.addEventListener("click", runImage);
-      scrollToBottom();
+      document.getElementById("btnImg").addEventListener("click", runImage);
     }
 
     async function runImage(){
@@ -666,31 +588,16 @@
       }
     }
 
-    // ---------- TAB SWITCH ----------
-    function renderChatTab(){
-      chatBody.innerHTML = "";
-      hint.style.display = "block";
-      chatFooter.style.display = "flex";
-      addMessage("assistant", "Hello! How can I help you today?");
-    }
-
     function switchTab(tab){
       activeTab = tab;
 
-      if (tab === "chat") { setActive(tabChat); }
-      if (tab === "voice") { setActive(tabVoice); }
-      if (tab === "image") { setActive(tabImage); }
+      if (tab === "chat") setActive(tabChat);
+      if (tab === "voice") setActive(tabVoice);
+      if (tab === "image") setActive(tabImage);
 
-      if (tab === "chat") {
-        renderChatTab();
-        return;
-      }
-
-      hint.style.display = "none";
-      chatFooter.style.display = "none";
-
-      if (tab === "voice") renderVoicePanel();
-      if (tab === "image") renderImagePanel();
+      if (tab === "chat") return renderChatTab();
+      if (tab === "voice") return renderVoicePanel();
+      if (tab === "image") return renderImagePanel();
     }
 
     tabChat.addEventListener("click", function(){ switchTab("chat"); });
