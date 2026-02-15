@@ -300,6 +300,30 @@
     }
     .fab svg{width:28px;height:28px}
     .fab:active{transform: translateY(1px)}
+/* ===== FIX: font smaller & better mobile ===== */
+.bubble{ font-size: 14px; line-height: 1.35; }
+textarea{ font-size: 15px; }
+.hTitle{ font-size: 26px; }
+.sub{ font-size: 13px; }
+.select select{ font-size: 13px; }
+.sendBtn{ padding: 11px 14px; min-width: 86px; }
+
+/* ===== FIX: floating buttons do not block popup ===== */
+.fabCol{
+  right: 12px;
+  bottom: 12px;
+  gap: 10px;
+}
+.fab{
+  width: 54px;
+  height: 54px;
+}
+
+/* When popup is open, move fabs away (or hide) */
+.chat.open ~ .fabCol { 
+  opacity: 0.0;
+  pointer-events: none;
+}
   </style>
 </head>
 
