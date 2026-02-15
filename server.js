@@ -116,16 +116,45 @@ app.post("/image", async (req, res) => {
   }
 });
 
-// ===== TTS =====
-// NOTE: If your current Google TTS already works, keep your existing endpoint.
-// This is only a template hook.
+// ===== TTS (Google Cloud Text-to-Speech) =====
 app.post("/tts", async (req, res) => {
   const text = (req.body?.text || "").trim();
-  if(!text) return res.json({ error: "Please provide text." });
+  if (!text) return res.json({ error: "Please provide text." });
 
-  // If you already have Google TTS working in your own way, keep it.
-  // Here we just return error as placeholder to avoid breaking.
-  return res.json({ error: "TTS endpoint not implemented here. Keep your existing Google TTS connection." });
+  const TTS_KEY = process.env.GOOGLE_TTS_API_KEY;
+  if (!TTS_KEY) return res.json({ error: "Missing GOOGLE_TTS_API_KEY in Railway Variables." });
+
+  const languageCode = process.env.TTS_LANG || "en-US";
+  const voiceName = process.env.TTS_VOICE || "en-US-Neural2-D";
+
+  try {
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(TTS_KEY)}`;
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: { text },
+        voice: { languageCode, name: voiceName },
+        audioConfig: { audioEncoding: "MP3" }
+      })
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      const msg = data?.error?.message || "TTS request failed";
+      return res.json({ error: msg });
+    }
+
+    const b64 = data?.audioContent;
+    if (!b64) return res.json({ error: "No audioContent returned from Google TTS." });
+
+    // UI expects audioBase64
+    return res.json({ audioBase64: b64 });
+  } catch (e) {
+    return res.json({ error: e.message });
+  }
 });
 
 app.listen(PORT, () => console.log("Server running on", PORT));
