@@ -106,52 +106,57 @@ app.post("/chat", async (req, res) => {
 });
 
 // ===== VOICE (Google Cloud Text-to-Speech) =====
-// Client sends: { text, languageCode: "en-US"|"km-KH", gender: "FEMALE"|"MALE" }
+// Client: { text, languageCode: "en-US"|"km-KH", gender: "FEMALE"|"MALE", voiceType?: "neural"|"standard" }
 app.post("/tts", async (req, res) => {
   const text = String(req.body?.text || "").trim();
   const languageCode = String(req.body?.languageCode || "en-US");
   const genderRaw = String(req.body?.gender || "FEMALE").toUpperCase();
   const gender = genderRaw === "MALE" ? "MALE" : "FEMALE";
+  const voiceType = String(req.body?.voiceType || "neural").toLowerCase(); // neural|standard
 
   if (!text) return res.json({ audioUrl: "", error: "Please type text for TTS." });
   if (!GOOGLE_TTS_API_KEY)
     return res.json({ audioUrl: "", error: "Missing GOOGLE_TTS_API_KEY in Railway Variables." });
 
   try {
-    // 1) Get voices list and pick best match (language + gender)
     const voicesUrl = `https://texttospeech.googleapis.com/v1/voices?key=${encodeURIComponent(
       GOOGLE_TTS_API_KEY
     )}`;
-
     const voicesData = await fetchJson(voicesUrl, { method: "GET" });
     const voices = Array.isArray(voicesData?.voices) ? voicesData.voices : [];
 
-    // Filter by language
+    // Filter by language + gender
     const byLang = voices.filter((v) => (v.languageCodes || []).includes(languageCode));
-    // Filter by gender
-    const byLangGender = byLang.filter((v) => String(v.ssmlGender || "").toUpperCase() === gender);
+    const byLangGender = byLang.filter(
+      (v) => String(v.ssmlGender || "").toUpperCase() === gender
+    );
 
-    // Choose voice name (fallback to any in language)
+    // Prefer neural (WaveNet/Neural2) if available, else fallback to any
+    const preferNeural = (arr) =>
+      arr.find((v) => /Neural2|Wavenet|WaveNet/i.test(v.name || "")) || arr[0];
+
+    const preferStandard = (arr) =>
+      arr.find((v) => !/Neural2|Wavenet|WaveNet/i.test(v.name || "")) || arr[0];
+
     const chosen =
-      byLangGender[0] || byLang[0] || voices[0];
+      (voiceType === "standard"
+        ? preferStandard(byLangGender) || preferStandard(byLang) || preferStandard(voices)
+        : preferNeural(byLangGender) || preferNeural(byLang) || preferNeural(voices));
 
     if (!chosen?.name) {
-      return res.json({
-        audioUrl: "",
-        error: "No available voice found. Check if Text-to-Speech API is enabled and language is supported.",
-      });
+      return res.json({ audioUrl: "", error: "No available voice found for this language/gender." });
     }
 
-    // 2) Synthesize
     const synthUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(
       GOOGLE_TTS_API_KEY
     )}`;
 
+    // IMPORTANT: always include voice.name (fixes “requires a model name”)
     const synthBody = {
       input: { text: text.slice(0, 4000) },
       voice: {
         languageCode,
-        name: chosen.name,
+        name: chosen.name,        // ✅ required for many voices
         ssmlGender: gender,
       },
       audioConfig: {
@@ -168,17 +173,13 @@ app.post("/tts", async (req, res) => {
     });
 
     const audioContent = synthData?.audioContent;
-    if (!audioContent) {
-      return res.json({ audioUrl: "", error: "No audioContent returned from TTS." });
-    }
+    if (!audioContent) return res.json({ audioUrl: "", error: "No audioContent returned from TTS." });
 
-    const audioUrl = `data:audio/mpeg;base64,${audioContent}`;
-    return res.json({ audioUrl, voiceName: chosen.name });
+    return res.json({ audioUrl: `data:audio/mpeg;base64,${audioContent}`, voiceName: chosen.name });
   } catch (e) {
     return res.json({ audioUrl: "", error: "TTS error: " + e.message });
   }
 });
-
 // ===== IMAGE (Imagen REST predict) =====
 // Client sends: { prompt, aspectRatio }
 app.post("/image", async (req, res) => {
