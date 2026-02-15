@@ -4,13 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SAK AI Studio Demo</title>
-
   <style>
     :root{
       --bg1:#071525;
-      --line:rgba(255,255,255,.10);
+      --bg2:#0b1b2f;
+      --card:#0b1f34;
+      --line:rgba(255,255,255,.08);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.65);
+      --bubble:rgba(255,255,255,.09);
+      --user:#5c6cff;
       --btn:#5c6cff;
       --btn2:#3e4cff;
       --shadow:0 18px 60px rgba(0,0,0,.55);
@@ -18,40 +21,28 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: radial-gradient(1000px 500px at 50% 10%, #0f2a4a 0%, var(--bg1) 55%, #040b14 100%);
       color:var(--text);
       min-height:100vh;
       display:flex;
       justify-content:center;
-      padding:18px 12px 130px;
+      padding:18px 12px 110px;
     }
-    .page{ width:min(980px,100%); }
+    .page{ width:min(980px, 100%); }
     .hero{ text-align:center; padding:26px 10px 10px; }
     .hero h1{
       margin:0;
       font-size: clamp(34px, 7vw, 62px);
-      font-weight:800;
-      letter-spacing:.4px;
+      letter-spacing: .5px;
+      font-weight: 750;
     }
     .hero p{
       margin:12px auto 0;
-      max-width:720px;
-      color:var(--muted);
-      line-height:1.6;
-      font-size: clamp(14px, 2.6vw, 18px);
-    }
-    .pill{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      color:var(--muted);
-      font-size:13px;
-      background: rgba(255,255,255,.04);
-      margin-top:14px;
+      max-width: 680px;
+      color: var(--muted);
+      line-height:1.55;
+      font-size: clamp(14px, 2.5vw, 18px);
     }
     .grid{
       display:grid;
@@ -70,37 +61,49 @@
     }
     .card h3{margin:0 0 6px; font-size:18px}
     .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:13px;
+      background: rgba(255,255,255,.03);
+      margin-top:12px;
+    }
 
-    /* ===== Floating buttons ===== */
-    .fab{
+    /* ===== Floating Buttons (3) ===== */
+    .fabStack{
       position:fixed;
       right:16px;
-      width:62px;
-      height:62px;
-      border-radius:999px;
-      border:none;
-      cursor:pointer;
-      box-shadow: var(--shadow);
+      bottom:18px;
       display:flex;
-      align-items:center;
-      justify-content:center;
-      color:white;
+      flex-direction:column;
+      gap:12px;
       z-index:999;
-      -webkit-tap-highlight-color: transparent;
     }
-    .fab:active{transform: translateY(1px)}
-    .fab-chat{ bottom:18px; background: radial-gradient(60px 60px at 35% 30%, #8894ff 0%, var(--btn) 40%, #2b34b5 100%); }
-    .fab-voice{ bottom:92px; background: radial-gradient(60px 60px at 35% 30%, #66ddff 0%, #00a8ff 40%, #0060c9 100%); font-size:24px; }
-    .fab-image{ bottom:166px; background: radial-gradient(60px 60px at 35% 30%, #ffd08a 0%, #ff8a00 40%, #d64a00 100%); font-size:24px; }
+    .fab{
+      width:62px;height:62px;border-radius:999px;
+      border:none; cursor:pointer;
+      background: radial-gradient(60px 60px at 35% 30%, #8894ff 0%, var(--btn) 40%, #2b34b5 100%);
+      box-shadow: var(--shadow);
+      display:flex; align-items:center; justify-content:center;
+      color:white;
+    }
+    .fab.small{ width:54px; height:54px; opacity:.95; }
     .fab svg{width:28px;height:28px}
+    .fab.small svg{width:24px;height:24px}
+    .fab:active{transform: translateY(1px)}
 
     /* ===== Modal ===== */
     .modal{
       position:fixed;
       right:16px;
       bottom:92px;
-      width:min(520px, calc(100vw - 24px));
-      height:min(720px, calc(100vh - 120px));
+      width:min(560px, calc(100vw - 24px));
+      height:min(760px, calc(100vh - 120px));
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border:1px solid var(--line);
       border-radius:18px;
@@ -111,116 +114,201 @@
       backdrop-filter: blur(10px);
     }
     .modal.open{display:flex; flex-direction:column}
+
     .modalHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:14px 14px 12px;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 14px 10px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.12);
     }
-    .title{display:flex;flex-direction:column;gap:2px}
-    .title strong{font-size:16px}
-    .title span{font-size:12px;color:var(--muted)}
+    .modalHeader .title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .modalHeader .title strong{font-size:16px}
+    .modalHeader .title span{font-size:12px; color:var(--muted)}
     .iconBtn{
-      border:none;background:transparent;color:rgba(255,255,255,.9);
-      cursor:pointer;width:40px;height:40px;border-radius:10px;
+      border:none;background:transparent;color:rgba(255,255,255,.85);
+      cursor:pointer; width:40px;height:40px;border-radius:10px;
     }
     .iconBtn:hover{background: rgba(255,255,255,.06)}
     .iconBtn svg{width:20px;height:20px}
 
-    /* Chat UI */
-    .chatTools{
-      display:flex; gap:10px; padding:10px 12px;
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:10px;
+      padding:10px 12px;
       border-bottom:1px solid var(--line);
       background: rgba(0,0,0,.08);
-      align-items:center; flex-wrap:wrap;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tabBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.85);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .tabBtn.active{
+      background: rgba(92,108,255,.22);
+      border-color: rgba(92,108,255,.35);
+      color: #fff;
+    }
+    .toolsRight{
+      margin-left:auto;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
     }
     .tool{
       display:flex; gap:8px; align-items:center;
-      padding:6px 10px; border:1px solid var(--line);
-      border-radius:12px; background: rgba(255,255,255,.03);
-      color:var(--muted); font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12px;
     }
     .tool select{
-      background:transparent;border:none;color:rgba(255,255,255,.9);
-      outline:none;font-size:12px;
+      background: transparent;
+      border:none;
+      color: rgba(255,255,255,.85);
+      outline:none;
+      font-size:12px;
     }
-    .tool button{background:transparent;border:none;color:rgba(255,255,255,.9);cursor:pointer}
+    .tool button{
+      background: transparent;border:none;color: rgba(255,255,255,.85);
+      cursor:pointer;font-size:12px;
+    }
+    .tool button:hover{opacity:.85}
+
+    .panel{
+      flex:1;
+      display:none;
+      overflow:hidden;
+    }
+    .panel.active{display:flex; flex-direction:column}
+
+    /* Chat panel */
     .chatBody{ flex:1; padding:14px 12px 10px; overflow:auto; }
     .msgRow{display:flex; margin:10px 0}
     .msgRow.user{justify-content:flex-end}
     .bubble{
-      max-width:85%;
+      max-width: 88%;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--line);
-      background: rgba(255,255,255,.08);
-      line-height:1.45;
+      background: var(--bubble);
+      color: var(--text);
+      line-height:1.5;
       white-space: pre-wrap;
       word-wrap: break-word;
-      font-size:15px;
+      font-size: 15px;
     }
     .msgRow.user .bubble{
       background: rgba(92,108,255,.22);
       border-color: rgba(92,108,255,.35);
     }
-    .hint{ text-align:center; font-size:12px; color:var(--muted); padding:0 12px 10px; }
-    .chatFooter{
-      padding:12px; border-top:1px solid var(--line);
-      background: rgba(0,0,0,.10);
-      display:flex; gap:10px; align-items:flex-end;
+
+    .typing{
+      display:inline-flex; gap:6px; align-items:center;
     }
-    textarea{
-      flex:1; resize:none; min-height:48px; max-height:140px;
-      border-radius:14px; border:1px solid var(--line);
-      outline:none; padding:12px 12px;
+    .dot{
+      width:6px;height:6px;border-radius:999px;
+      background: rgba(255,255,255,.55);
+      animation: bounce 1s infinite ease-in-out;
+    }
+    .dot:nth-child(2){animation-delay:.15s}
+    .dot:nth-child(3){animation-delay:.3s}
+    @keyframes bounce{
+      0%, 80%, 100%{transform: translateY(0); opacity:.5}
+      40%{transform: translateY(-5px); opacity:1}
+    }
+
+    .hint{
+      text-align:center;
+      font-size:12px;
+      color: var(--muted);
+      padding: 0 12px 10px;
+    }
+    .footer{
+      padding:12px;
+      border-top:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+    }
+    textarea, input[type="text"]{
+      flex:1;
+      resize:none;
+      min-height:46px;
+      max-height:140px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      outline:none;
+      padding:10px 12px;
       background: rgba(0,0,0,.20);
-      color:var(--text);
+      color: var(--text);
       font-size:16px;
       line-height:1.35;
     }
     .sendBtn{
-      border:none; cursor:pointer;
-      padding:12px 14px; border-radius:14px;
+      border:none;
+      cursor:pointer;
+      padding:12px 14px;
+      border-radius:14px;
       background: linear-gradient(180deg, var(--btn), var(--btn2));
-      color:white; font-weight:800;
-      min-width:92px;
+      color:white;
+      font-weight:700;
+      min-width:96px;
       box-shadow: 0 10px 20px rgba(92,108,255,.18);
     }
-    .sendBtn:disabled{opacity:.55;cursor:not-allowed}
+    .sendBtn:disabled{opacity:.55; cursor:not-allowed}
 
-    /* Voice/Image simple panel */
-    .panelBody{ flex:1; padding:14px 12px; overflow:auto; }
-    .panelCard{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      background: rgba(0,0,0,.12);
+    /* Voice/Image panels */
+    .panelBody{
+      flex:1;
+      padding:14px 12px;
+      overflow:auto;
     }
-    .panelCard h3{margin:0 0 8px; font-size:16px}
-    .panelCard p{margin:0 0 12px; color:var(--muted); line-height:1.5; font-size:14px}
-    .input{
-      width:100%;
+    .panelBody h3{margin:0 0 10px}
+    .panelBody p{margin:0 0 12px; color:var(--muted); line-height:1.55}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btnGhost{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.88);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    .btnGhost:disabled{opacity:.55; cursor:not-allowed}
+    .resultBox{
+      margin-top:12px;
+      padding:12px;
       border-radius:14px;
       border:1px solid var(--line);
-      outline:none;
-      padding:12px 12px;
-      background: rgba(0,0,0,.20);
+      background: rgba(0,0,0,.18);
       color: var(--text);
-      font-size:16px;
+      line-height:1.55;
+      font-size:14px;
+      white-space:pre-wrap;
+      word-wrap:break-word;
     }
-    .actionBtn{
+    .imgWrap{
       margin-top:12px;
-      border:none; cursor:pointer;
-      padding:12px 14px; border-radius:14px;
-      color:white; font-weight:900;
-      min-width:170px;
-      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
     }
-    .actionVoice{ background: linear-gradient(180deg, #00a8ff, #0060c9); }
-    .actionImg{ background: linear-gradient(180deg, #ff8a00, #d64a00); }
-    .miniNote{ margin-top:10px; font-size:12px; color:var(--muted); }
+    .imgWrap img{width:100%; display:block}
   </style>
 </head>
 
@@ -230,7 +318,7 @@
       <h1>SAK AI Studio Demo</h1>
       <p>
         AI platform demo for Voice, Chat & Image. This is an early-stage prototype designed for testing and evaluation.
-        Use the floating buttons to open AI Assistant, Voice AI, or Image Generator.
+        Use the floating buttons to open Chat / Voice / Image.
       </p>
       <div class="pill">✅ Deployed on Railway • ✅ Connected to Gemini API</div>
     </div>
@@ -242,131 +330,146 @@
       </div>
       <div class="card">
         <h3>Voice AI (TTS)</h3>
-        <p>Convert text into natural voice (demo placeholder — can be connected to TTS provider).</p>
+        <p>Convert text into natural voice (connected to Google TTS endpoint).</p>
       </div>
       <div class="card">
         <h3>Image Generator</h3>
-        <p>Generate images from text prompts (demo placeholder — can be connected later).</p>
+        <p>Generate images from text prompts (connected to Imagen/Gemini image endpoint).</p>
       </div>
     </div>
   </div>
 
-  <!-- Floating buttons -->
-  <button class="fab fab-image" id="fabImage" aria-label="Open image generator">🖼</button>
-  <button class="fab fab-voice" id="fabVoice" aria-label="Open voice AI">🎤</button>
-  <button class="fab fab-chat" id="fabChat" aria-label="Open chat">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-    </svg>
-  </button>
+  <!-- Floating Buttons -->
+  <div class="fabStack">
+    <!-- Image -->
+    <button class="fab small" id="fabImage" aria-label="Open image generator">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="white" stroke-width="1.8"/>
+        <path d="M8 14l2-2 2 2 3-3 3 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 9.2h.01" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </button>
 
-  <!-- CHAT MODAL -->
-  <div class="modal" id="chat">
+    <!-- Voice -->
+    <button class="fab small" id="fabVoice" aria-label="Open voice AI">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.8"/>
+        <path d="M19 11a7 7 0 0 1-14 0" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 18v3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <!-- Chat -->
+    <button class="fab" id="fabChat" aria-label="Open chat">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Unified Modal (Chat + Voice + Image) -->
+  <div class="modal" id="modal">
     <div class="modalHeader">
-      <div class="title"><strong>AI Assistant</strong><span>SAK AI Studio</span></div>
-      <button class="iconBtn" id="closeChat" aria-label="Close chat">
+      <div class="title">
+        <strong id="modalTitle">AI Assistant</strong>
+        <span>SAK AI Studio</span>
+      </div>
+      <button class="iconBtn" id="closeModal" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M6 6l12 12M18 6 6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
     </div>
 
-    <div class="chatTools">
-      <div class="tool">Answer:
-        <select id="answerLen">
-          <option value="short">Short</option>
-          <option value="medium" selected>Medium</option>
-          <option value="long">Long</option>
-        </select>
-      </div>
-      <div class="tool">Memory:
-        <select id="memoryMode">
-          <option value="on" selected>On</option>
-          <option value="off">Off</option>
-        </select>
-      </div>
-      <div class="tool"><button id="clearChat" type="button">Clear</button></div>
-    </div>
+    <div class="tabs">
+      <button class="tabBtn active" id="tabChat">Chat</button>
+      <button class="tabBtn" id="tabVoice">Voice AI</button>
+      <button class="tabBtn" id="tabImage">Image</button>
 
-    <div class="chatBody" id="chatBody"></div>
-    <div class="hint">Tip: Press Enter to send • Shift+Enter for new line</div>
+      <div class="toolsRight">
+        <div class="tool" title="Answer length style">
+          Answer:
+          <select id="answerLen">
+            <option value="short">Short</option>
+            <option value="medium" selected>Medium</option>
+            <option value="long">Long</option>
+          </select>
+        </div>
 
-    <div class="chatFooter">
-      <textarea id="input" placeholder="Type a message..."></textarea>
-      <button class="sendBtn" id="sendBtn">Send</button>
-    </div>
-  </div>
+        <div class="tool">
+          Memory:
+          <select id="memoryMode">
+            <option value="on" selected>On</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
 
-  <!-- VOICE MODAL -->
-  <div class="modal" id="voiceModal">
-    <div class="modalHeader">
-      <div class="title"><strong>Voice AI (TTS)</strong><span>SAK AI Studio</span></div>
-      <button class="iconBtn" id="closeVoice" aria-label="Close voice">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M6 6l12 12M18 6 6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
-    <div class="panelBody">
-      <div class="panelCard">
-        <h3>Text → Voice (Demo)</h3>
-        <p>Type text and click generate. (Connect ElevenLabs later.)</p>
-        <input class="input" id="voiceText" placeholder="Enter text for voice..." />
-        <button class="actionBtn actionVoice" id="btnVoiceGen">Generate Voice</button>
-        <div class="miniNote" id="voiceStatus">Status: Demo only.</div>
+        <div class="tool">
+          <button id="clearChat" type="button">Clear</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- IMAGE MODAL -->
-  <div class="modal" id="imageModal">
-    <div class="modalHeader">
-      <div class="title"><strong>Image Generator</strong><span>SAK AI Studio</span></div>
-      <button class="iconBtn" id="closeImage" aria-label="Close image">
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M6 6l12 12M18 6 6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
+    <!-- CHAT PANEL -->
+    <div class="panel active" id="panelChat">
+      <div class="chatBody" id="chatBody"></div>
+      <div class="hint">Tip: Press Enter to send • Shift+Enter for new line</div>
+      <div class="footer">
+        <textarea id="input" placeholder="Type a message..."></textarea>
+        <button class="sendBtn" id="sendBtn">Send</button>
+      </div>
     </div>
-    <div class="panelBody">
-      <div class="panelCard">
-        <h3>Prompt → Image (Demo)</h3>
-        <p>Type a prompt and click generate. (Connect image API later.)</p>
-        <input class="input" id="imagePrompt" placeholder="Describe your image..." />
-        <button class="actionBtn actionImg" id="btnImageGen">Generate Image</button>
-        <div class="miniNote" id="imageStatus">Status: Demo only.</div>
+
+    <!-- VOICE PANEL -->
+    <div class="panel" id="panelVoice">
+      <div class="panelBody">
+        <h3>Voice AI (Text-to-Speech)</h3>
+        <p>Type text → generate voice → play audio.</p>
+        <div class="row">
+          <input id="ttsText" type="text" placeholder="Enter text for voice..." />
+          <button class="sendBtn" id="ttsBtn" style="min-width:160px;">Generate Voice</button>
+        </div>
+        <div class="resultBox" id="ttsStatus">Ready.</div>
+        <div class="imgWrap" style="margin-top:12px; padding:12px;">
+          <audio id="ttsAudio" controls style="width:100%;"></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMAGE PANEL -->
+    <div class="panel" id="panelImage">
+      <div class="panelBody">
+        <h3>Image Generator</h3>
+        <p>Write a prompt → generate image → view result.</p>
+        <div class="row">
+          <input id="imgPrompt" type="text" placeholder="Describe the image you want..." />
+          <button class="sendBtn" id="imgBtn" style="min-width:170px;">Generate Image</button>
+        </div>
+        <div class="resultBox" id="imgStatus">Ready.</div>
+        <div class="imgWrap" id="imgWrap" style="display:none;">
+          <img id="imgOut" alt="Generated image"/>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const fabChat  = document.getElementById("fabChat");
+    const modal = document.getElementById("modal");
+    const closeModal = document.getElementById("closeModal");
+    const modalTitle = document.getElementById("modalTitle");
+
+    const fabChat = document.getElementById("fabChat");
     const fabVoice = document.getElementById("fabVoice");
     const fabImage = document.getElementById("fabImage");
 
-    const chat = document.getElementById("chat");
-    const voiceModal = document.getElementById("voiceModal");
-    const imageModal = document.getElementById("imageModal");
+    const tabChat = document.getElementById("tabChat");
+    const tabVoice = document.getElementById("tabVoice");
+    const tabImage = document.getElementById("tabImage");
 
-    const closeChat = document.getElementById("closeChat");
-    const closeVoice = document.getElementById("closeVoice");
-    const closeImage = document.getElementById("closeImage");
+    const panelChat = document.getElementById("panelChat");
+    const panelVoice = document.getElementById("panelVoice");
+    const panelImage = document.getElementById("panelImage");
 
-    function closeAll(){
-      chat.classList.remove("open");
-      voiceModal.classList.remove("open");
-      imageModal.classList.remove("open");
-    }
-
-    fabChat.addEventListener("click", () => { closeAll(); chat.classList.add("open"); setTimeout(()=>input.focus(),80); });
-    fabVoice.addEventListener("click", () => { closeAll(); voiceModal.classList.add("open"); setTimeout(()=>voiceText.focus(),80); });
-    fabImage.addEventListener("click", () => { closeAll(); imageModal.classList.add("open"); setTimeout(()=>imagePrompt.focus(),80); });
-
-    closeChat.addEventListener("click", () => chat.classList.remove("open"));
-    closeVoice.addEventListener("click", () => voiceModal.classList.remove("open"));
-    closeImage.addEventListener("click", () => imageModal.classList.remove("open"));
-
-    // Chat
     const chatBody = document.getElementById("chatBody");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("sendBtn");
@@ -374,9 +477,61 @@
     const answerLen = document.getElementById("answerLen");
     const memoryMode = document.getElementById("memoryMode");
 
+    const ttsText = document.getElementById("ttsText");
+    const ttsBtn = document.getElementById("ttsBtn");
+    const ttsStatus = document.getElementById("ttsStatus");
+    const ttsAudio = document.getElementById("ttsAudio");
+
+    const imgPrompt = document.getElementById("imgPrompt");
+    const imgBtn = document.getElementById("imgBtn");
+    const imgStatus = document.getElementById("imgStatus");
+    const imgWrap = document.getElementById("imgWrap");
+    const imgOut = document.getElementById("imgOut");
+
     let history = [];
 
-    function addMessage(role, text){
+    function openModal(which){
+      modal.classList.add("open");
+      switchTab(which);
+      setTimeout(() => {
+        if(which === "chat") input.focus();
+        if(which === "voice") ttsText.focus();
+        if(which === "image") imgPrompt.focus();
+      }, 80);
+    }
+    function closeModalPopup(){
+      modal.classList.remove("open");
+    }
+
+    function switchTab(which){
+      // buttons
+      tabChat.classList.toggle("active", which === "chat");
+      tabVoice.classList.toggle("active", which === "voice");
+      tabImage.classList.toggle("active", which === "image");
+
+      // panels
+      panelChat.classList.toggle("active", which === "chat");
+      panelVoice.classList.toggle("active", which === "voice");
+      panelImage.classList.toggle("active", which === "image");
+
+      modalTitle.textContent =
+        which === "chat" ? "AI Assistant" :
+        which === "voice" ? "Voice AI" :
+        "Image Generator";
+    }
+
+    fabChat.addEventListener("click", () => openModal("chat"));
+    fabVoice.addEventListener("click", () => openModal("voice"));
+    fabImage.addEventListener("click", () => openModal("image"));
+    closeModal.addEventListener("click", closeModalPopup);
+
+    tabChat.addEventListener("click", () => switchTab("chat"));
+    tabVoice.addEventListener("click", () => switchTab("voice"));
+    tabImage.addEventListener("click", () => switchTab("image"));
+
+    function scrollToBottom(){ chatBody.scrollTop = chatBody.scrollHeight; }
+
+    function addMessage(role, text) {
       const row = document.createElement("div");
       row.className = "msgRow " + (role === "user" ? "user" : "assistant");
       const bubble = document.createElement("div");
@@ -384,75 +539,166 @@
       bubble.textContent = text;
       row.appendChild(bubble);
       chatBody.appendChild(row);
-      chatBody.scrollTop = chatBody.scrollHeight;
+      scrollToBottom();
     }
 
-    function buildPrompt(userText){
+    function addTyping() {
+      const row = document.createElement("div");
+      row.className = "msgRow assistant";
+      row.id = "typingRow";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+      bubble.appendChild(typing);
+      row.appendChild(bubble);
+      chatBody.appendChild(row);
+      scrollToBottom();
+    }
+    function removeTyping() {
+      const row = document.getElementById("typingRow");
+      if (row) row.remove();
+    }
+
+    function buildPrompt(userText) {
       const len = answerLen.value;
-      let style = "";
-      if(len==="short") style="Answer concisely in 3-6 sentences.";
-      if(len==="medium") style="Answer clearly with bullets/steps and at least 1 example.";
-      if(len==="long") style="Answer in detail with sections, steps, and multiple examples.";
-      return `Please follow: ${style}\n\nUser: ${userText}`;
+      let styleRule = "";
+      if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
+      if (len === "medium") styleRule = "Answer clearly with steps/bullets and at least 1 example. Avoid vague replies.";
+      if (len === "long") styleRule = "Answer in detail with sections, steps, and multiple examples.";
+      return `Please follow: ${styleRule}\n\nUser: ${userText}`;
     }
 
-    async function sendMessage(){
+    async function sendMessage() {
       const raw = input.value.trim();
-      if(!raw) return;
+      if (!raw) return;
 
       input.value = "";
       sendBtn.disabled = true;
 
       addMessage("user", raw);
-      history.push({role:"user", text: raw});
+      history.push({ role: "user", text: raw });
+      addTyping();
 
-      try{
+      try {
         const payload = {
           message: buildPrompt(raw),
           history: memoryMode.value === "on" ? history.slice(-12) : []
         };
 
         const r = await fetch("/chat", {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
         const data = await r.json();
-        const reply = data?.reply ? String(data.reply) : "No response";
+        const reply = (data && data.reply) ? String(data.reply) : "No response";
+
+        removeTyping();
         addMessage("assistant", reply);
-        history.push({role:"assistant", text: reply});
-      }catch(e){
+        history.push({ role: "assistant", text: reply });
+
+      } catch (e) {
+        removeTyping();
         addMessage("assistant", "Network/Server error: " + e.message);
-      }finally{
+      } finally {
         sendBtn.disabled = false;
         input.focus();
       }
     }
 
     sendBtn.addEventListener("click", sendMessage);
-    input.addEventListener("keydown", (e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
-    clearChatBtn.addEventListener("click", ()=>{ chatBody.innerHTML=""; history=[]; addMessage("assistant","Hello! How can I help you today?"); });
-
-    addMessage("assistant","Hello! How can I help you today?");
-
-    // Voice demo
-    const voiceText = document.getElementById("voiceText");
-    const voiceStatus = document.getElementById("voiceStatus");
-    document.getElementById("btnVoiceGen").addEventListener("click", ()=>{
-      voiceStatus.textContent = voiceText.value.trim()
-        ? "Status: (Demo) Received text. Connect TTS later."
-        : "Status: Please enter text first.";
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
 
-    // Image demo
-    const imagePrompt = document.getElementById("imagePrompt");
-    const imageStatus = document.getElementById("imageStatus");
-    document.getElementById("btnImageGen").addEventListener("click", ()=>{
-      imageStatus.textContent = imagePrompt.value.trim()
-        ? "Status: (Demo) Received prompt. Connect image API later."
-        : "Status: Please enter a prompt first.";
+    clearChatBtn.addEventListener("click", () => {
+      chatBody.innerHTML = "";
+      history = [];
+      addMessage("assistant", "Hello! How can I help you today?");
     });
+
+    // ===== Voice (TTS) =====
+    async function generateVoice(){
+      const text = (ttsText.value || "").trim();
+      if(!text) return;
+
+      ttsBtn.disabled = true;
+      ttsStatus.textContent = "Generating voice...";
+      try{
+        const r = await fetch("/tts", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ text })
+        });
+        const data = await r.json();
+
+        if(data.error){
+          ttsStatus.textContent = "Error: " + data.error;
+        }else if(data.audioUrl){
+          ttsAudio.src = data.audioUrl;     // option A: server returns URL
+          ttsStatus.textContent = "Done ✅ (Audio URL)";
+        }else if(data.audioBase64){
+          ttsAudio.src = "data:audio/mp3;base64," + data.audioBase64; // option B
+          ttsStatus.textContent = "Done ✅ (Base64)";
+        }else{
+          ttsStatus.textContent = "No audio returned.";
+        }
+      }catch(e){
+        ttsStatus.textContent = "Error: " + e.message;
+      }finally{
+        ttsBtn.disabled = false;
+      }
+    }
+    ttsBtn.addEventListener("click", generateVoice);
+    ttsText.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateVoice(); } });
+
+    // ===== Image =====
+    async function generateImage(){
+      const prompt = (imgPrompt.value || "").trim();
+      if(!prompt) return;
+
+      imgBtn.disabled = true;
+      imgStatus.textContent = "Generating image...";
+      imgWrap.style.display = "none";
+
+      try{
+        const r = await fetch("/image", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await r.json();
+
+        if(data.error){
+          imgStatus.textContent = "Error: " + data.error;
+        }else if(data.imageUrl){
+          imgOut.src = data.imageUrl;
+          imgWrap.style.display = "block";
+          imgStatus.textContent = "Done ✅ (Image URL)";
+        }else if(data.imageBase64){
+          imgOut.src = "data:image/png;base64," + data.imageBase64;
+          imgWrap.style.display = "block";
+          imgStatus.textContent = "Done ✅ (Base64)";
+        }else{
+          imgStatus.textContent = "No image returned.";
+        }
+      }catch(e){
+        imgStatus.textContent = "Error: " + e.message;
+      }finally{
+        imgBtn.disabled = false;
+      }
+    }
+    imgBtn.addEventListener("click", generateImage);
+    imgPrompt.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); generateImage(); } });
+
+    // Initial greeting
+    addMessage("assistant", "Hello! How can I help you today?");
   </script>
 </body>
 </html>
