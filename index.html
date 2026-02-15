@@ -571,43 +571,34 @@
     }
 
     async function sendMessage() {
-      const raw = input.value.trim();
-      if (!raw) return;
+  const raw = input.value.trim();
+  if (!raw) return;
 
-      input.value = "";
-      sendBtn.disabled = true;
+  input.value = "";
+  sendBtn.disabled = true;
 
-      addMessage("user", raw);
-      history.push({ role: "user", text: raw });
-      addTyping();
+  addMessage("user", raw);
+  addTyping();
 
-      try {
-        const payload = {
-          message: buildPrompt(raw),
-          history: memoryMode.value === "on" ? history.slice(-12) : []
-        };
+  try {
+    const r = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: raw })
+    });
 
-        const r = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    const data = await r.json();
 
-        const data = await r.json();
-        const reply = (data && data.reply) ? String(data.reply) : "No response";
+    removeTyping();
+    addMessage("assistant", data.reply);
 
-        removeTyping();
-        addMessage("assistant", reply);
-        history.push({ role: "assistant", text: reply });
+  } catch (e) {
+    removeTyping();
+    addMessage("assistant", "Server error");
+  }
 
-      } catch (e) {
-        removeTyping();
-        addMessage("assistant", "Network/Server error: " + e.message);
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
-      }
-    }
+  sendBtn.disabled = false;
+}
 
     sendBtn.addEventListener("click", sendMessage);
     input.addEventListener("keydown", (e) => {
