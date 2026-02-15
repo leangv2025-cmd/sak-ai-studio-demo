@@ -1,157 +1,145 @@
 const express = require("express");
 const fetch = require("node-fetch");
-const path = require("path");
 
 const app = express();
 
-app.use(express.json({ limit: "2mb" }));
-app.use(express.static(__dirname));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.static(__dirname)); // serve index.html, css, etc.
 
 const GEMINI_KEY = process.env.GEMINI_KEY;
 const GOOGLE_TTS_API_KEY = process.env.GOOGLE_TTS_API_KEY;
 
-// -----------------------------
-// Helpers
-// -----------------------------
-function safeJson(res, status, obj) {
-  return res.status(status).json(obj);
+// -------- helpers ----------
+function sendJson(res, code, obj) {
+  res.status(code).set("Content-Type", "application/json").send(JSON.stringify(obj));
 }
 
 async function fetchJson(url, options) {
   const r = await fetch(url, options);
-  const data = await r.json().catch(() => ({}));
+  const text = await r.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch { data = { _raw: text }; }
   return { ok: r.ok, status: r.status, data };
 }
 
 // -----------------------------
-// CHAT (Gemini generateContent)
+// CHAT (Gemini)
 // -----------------------------
 app.post("/chat", async (req, res) => {
   const userMessage = (req.body?.message || "").trim();
-  if (!userMessage) return safeJson(res, 400, { reply: "Please type a message." });
-  if (!GEMINI_KEY) return safeJson(res, 400, { reply: "Missing GEMINI_KEY in Railway Variables." });
+  if (!userMessage) return sendJson(res, 400, { reply: "Please type a message." });
+  if (!GEMINI_KEY) return sendJson(res, 400, { reply: "Missing GEMINI_KEY in Railway Variables." });
 
   try {
-    // Use model that you confirmed works
-    const model = req.body?.model || "models/gemini-2.5-flash";
-    const url = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(
-      model.replace("models/", "")
-    )}:generateContent?key=${GEMINI_KEY}`;
+    const model = (req.body?.model || "models/gemini-2.5-flash").replace("models/", "");
+    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GEMINI_KEY}`;
 
     const payload = {
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
     };
 
-    const { ok, data } = await fetchJson(url, {
+    const r = await fetchJson(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const reply =
-      data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") ||
-      data?.error?.message ||
+      r?.data?.candidates?.[0]?.content?.parts?.map(p => p.text).join("") ||
+      r?.data?.error?.message ||
       "No response";
 
-    return safeJson(res, ok ? 200 : 400, { reply });
+    return sendJson(res, r.ok ? 200 : 400, { reply });
   } catch (e) {
-    return safeJson(res, 500, { reply: "Server error: " + e.message });
-  }
-});
-
-// -----------------------------
-// IMAGE (Gemini generateContent with image response)
-// Note: Some Gemini image generation setups differ by account.
-// This endpoint is a simple placeholder that returns text if image not available.
-// If your current image works already, keep your existing endpoint.
-// -----------------------------
-app.post("/image", async (req, res) => {
-  const prompt = (req.body?.prompt || "").trim();
-  if (!prompt) return safeJson(res, 400, { error: "Missing prompt" });
-  if (!GEMINI_KEY) return safeJson(res, 400, { error: "Missing GEMINI_KEY in Railway Variables." });
-
-  try {
-    // If your project already has working image endpoint, replace here with your existing logic.
-    // For demo: returns a message only.
-    return safeJson(res, 200, {
-      ok: true,
-      note:
-        "Image endpoint placeholder. If you already connected Gemini image, keep your working /image code here."
-    });
-  } catch (e) {
-    return safeJson(res, 500, { error: e.message });
+    return sendJson(res, 500, { reply: "Server error: " + e.message });
   }
 });
 
 // -----------------------------
 // TTS (Google Cloud Text-to-Speech)
-// Voice selector: Khmer/English + Male/Female
 // -----------------------------
 app.post("/tts", async (req, res) => {
+  const text = (req.body?.text || "").trim();
+  const lang = (req.body?.lang || "km").trim();         // km | en
+  const gender = (req.body?.gender || "FEMALE").toUpperCase(); // FEMALE | MALE
+
+  if (!text) return sendJson(res, 400, { error: "Missing text" });
+  if (!GOOGLE_TTS_API_KEY) return sendJson(res, 400, { error: "Missing GOOGLE_TTS_API_KEY in Railway Variables." });
+
+  const languageCode = lang === "km" ? "km-KH" : "en-US";
+  const ssmlGender = gender === "MALE" ? "MALE" : "FEMALE";
+
+  // Best-effort voice name (if not exist, auto fallback)
+  const voiceNameMap = {
+    "km-KH": { FEMALE: "km-KH-Standard-A", MALE: "km-KH-Standard-B" },
+    "en-US": { FEMALE: "en-US-Standard-C", MALE: "en-US-Standard-B" },
+  };
+
+  const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`;
+
+  async function callTTS(useName) {
+    const voice = { languageCode, ssmlGender };
+    if (useName) {
+      const v = voiceNameMap?.[languageCode]?.[ssmlGender];
+      if (v) voice.name = v;
+    }
+    return await fetchJson(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: { text },
+        voice,
+        audioConfig: { audioEncoding: "MP3" }
+      })
+    });
+  }
+
   try {
-    const text = (req.body?.text || "").trim();
-    const lang = (req.body?.lang || "km").trim(); // "km" or "en"
-    const gender = (req.body?.gender || "FEMALE").trim().toUpperCase(); // FEMALE|MALE
+    let r = await callTTS(true);
+    if (!r.ok) r = await callTTS(false);
 
-    if (!text) return safeJson(res, 400, { error: "Missing text" });
-    if (!GOOGLE_TTS_API_KEY)
-      return safeJson(res, 400, { error: "Missing GOOGLE_TTS_API_KEY in Railway Variables." });
-
-    const languageCode = lang === "km" ? "km-KH" : "en-US";
-
-    // Try best guess voice names (may vary by account/region).
-    // If name not available, API will error -> we fallback to no "name".
-    const voiceNameMap = {
-      "km-KH": { FEMALE: "km-KH-Standard-A", MALE: "km-KH-Standard-B" },
-      "en-US": { FEMALE: "en-US-Standard-C", MALE: "en-US-Standard-B" }
-    };
-
-    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`;
-
-    const tryCall = async (useName) => {
-      const voiceObj = {
-        languageCode,
-        ssmlGender: gender === "MALE" ? "MALE" : "FEMALE"
-      };
-      if (useName) {
-        const suggested = voiceNameMap?.[languageCode]?.[voiceObj.ssmlGender];
-        if (suggested) voiceObj.name = suggested;
-      }
-
-      return await fetchJson(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          input: { text },
-          voice: voiceObj,
-          audioConfig: { audioEncoding: "MP3" }
-        })
+    if (!r.ok) {
+      return sendJson(res, 400, {
+        error: r?.data?.error?.message || "TTS failed",
+        hint: "If you see HTML here, your endpoint is not hit. Ensure Railway runs server.js."
       });
-    };
-
-    // 1) try with voice name
-    let r1 = await tryCall(true);
-
-    // 2) if fails, try without voice name (lets Google auto-pick)
-    if (!r1.ok) {
-      let r2 = await tryCall(false);
-      if (!r2.ok) {
-        const msg = r2?.data?.error?.message || r1?.data?.error?.message || "TTS error";
-        return safeJson(res, 400, { error: msg, languageCode, gender });
-      }
-      r1 = r2;
     }
 
-    return safeJson(res, 200, {
-      audioContent: r1.data.audioContent,
-      used: { languageCode, gender }
+    return sendJson(res, 200, {
+      audioContent: r.data.audioContent,
+      used: { languageCode, ssmlGender }
     });
   } catch (e) {
-    return safeJson(res, 500, { error: e.message });
+    return sendJson(res, 500, { error: e.message });
   }
 });
 
 // -----------------------------
+// IMAGE (IMPORTANT)
+// -----------------------------
+// ⚠️ If your image generation already worked before, paste your working logic here.
+// This endpoint currently returns JSON to avoid the <!DOCTYPE error.
+app.post("/image", async (req, res) => {
+  const prompt = (req.body?.prompt || "").trim();
+  if (!prompt) return sendJson(res, 400, { error: "Missing prompt" });
+
+  // ✅ Keep JSON response so frontend never breaks
+  return sendJson(res, 200, {
+    ok: true,
+    note: "Image endpoint is connected on your side? If it stopped, paste your old working /image code here.",
+  });
+});
+
+// -----------------------------
+// JSON 404 for API routes (prevents HTML <!DOCTYPE>)
+// -----------------------------
+app.use((req, res, next) => {
+  if (req.path === "/tts" || req.path === "/image" || req.path === "/chat") {
+    return sendJson(res, 404, { error: "API route not found: " + req.path });
+  }
+  next();
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log("Server running on " + PORT));
