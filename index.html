@@ -7,7 +7,6 @@
   <style>
     :root{
       --bg1:#071525;
-      --card:#0b1f34;
       --line:rgba(255,255,255,.08);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.65);
@@ -31,6 +30,13 @@
     .hero{text-align:center; padding:26px 10px 10px}
     .hero h1{margin:0; font-size: clamp(34px, 7vw, 62px); font-weight: 750}
     .hero p{margin:12px auto 0; max-width:680px; color:var(--muted); line-height:1.55; font-size:clamp(14px, 2.5vw, 18px)}
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 12px; border:1px solid var(--line);
+      border-radius:999px; color:var(--muted); font-size:13px;
+      background: rgba(255,255,255,.03);
+      margin-top:12px;
+    }
     .grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; padding:18px 6px}
     @media (max-width:860px){ .grid{grid-template-columns:1fr} }
     .card{
@@ -43,13 +49,6 @@
     }
     .card h3{margin:0 0 6px; font-size:18px}
     .card p{margin:0; color:var(--muted); line-height:1.55; font-size:14px}
-    .pill{
-      display:inline-flex; gap:8px; align-items:center;
-      padding:8px 12px; border:1px solid var(--line);
-      border-radius:999px; color:var(--muted); font-size:13px;
-      background: rgba(255,255,255,.03);
-      margin-top:12px;
-    }
 
     /* Floating buttons group */
     .fabCol{
@@ -69,7 +68,7 @@
     .fab:active{transform: translateY(1px)}
     .fab svg{width:26px;height:26px}
 
-    /* Chat modal */
+    /* Popup */
     .chat{
       position:fixed; right:16px; bottom:92px;
       width: min(560px, calc(100vw - 24px));
@@ -84,6 +83,7 @@
       backdrop-filter: blur(10px);
     }
     .chat.open{display:flex; flex-direction:column}
+
     .chatHeader{
       display:flex; justify-content:space-between; align-items:center;
       padding:14px 14px 12px;
@@ -99,6 +99,22 @@
     }
     .iconBtn:hover{background: rgba(255,255,255,.06)}
     .iconBtn svg{width:20px;height:20px}
+
+    .tabs{ display:flex; gap:10px; padding: 10px 12px; border-bottom:1px solid var(--line); background: rgba(0,0,0,.06) }
+    .tabBtn{
+      padding:10px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.85);
+      cursor:pointer;
+      font-weight:700;
+    }
+    .tabBtn.active{
+      background: rgba(92,108,255,.25);
+      border-color: rgba(92,108,255,.45);
+      color:white;
+    }
 
     .chatTools{
       display:flex; gap:10px; padding:10px 12px;
@@ -116,21 +132,6 @@
       background: transparent; border:none;
       color: rgba(255,255,255,.9);
       outline:none; font-size:12px; cursor:pointer;
-    }
-    .tabs{ display:flex; gap:10px; padding: 10px 12px; border-bottom:1px solid var(--line); background: rgba(0,0,0,.06) }
-    .tabBtn{
-      padding:10px 14px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      color: rgba(255,255,255,.85);
-      cursor:pointer;
-      font-weight:700;
-    }
-    .tabBtn.active{
-      background: rgba(92,108,255,.25);
-      border-color: rgba(92,108,255,.45);
-      color:white;
     }
 
     .chatBody{ flex:1; padding:14px 12px 10px; overflow:auto; }
@@ -152,11 +153,6 @@
       background: rgba(92,108,255,.22);
       border-color: rgba(92,108,255,.35);
     }
-    .typing{ display:inline-flex; gap:6px; align-items:center; }
-    .dot{ width:6px;height:6px;border-radius:999px; background: rgba(255,255,255,.55); animation: bounce 1s infinite ease-in-out; }
-    .dot:nth-child(2){animation-delay:.15s}
-    .dot:nth-child(3){animation-delay:.3s}
-    @keyframes bounce{ 0%,80%,100%{transform:translateY(0); opacity:.5} 40%{transform:translateY(-5px); opacity:1} }
 
     .hint{ text-align:center; font-size:12px; color: var(--muted); padding: 0 12px 10px; }
 
@@ -181,7 +177,7 @@
     }
     .sendBtn:disabled{opacity:.55; cursor:not-allowed}
 
-    /* Voice + Image panels inside chatBody */
+    /* Panels */
     .panel{
       border:1px solid var(--line);
       border-radius:16px;
@@ -190,12 +186,9 @@
     }
     .panel h3{ margin:0 0 6px; }
     .panel p{ margin:0 0 12px; color:var(--muted); line-height:1.5; }
+
     .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
-    .field{
-      display:flex; flex-direction:column; gap:6px;
-      min-width: 160px;
-      flex:1;
-    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 160px; flex:1; }
     .field label{ font-size:12px; color:var(--muted); }
     .field select, .field input{
       padding:10px 12px;
@@ -230,6 +223,7 @@
       border-radius:16px;
       overflow:hidden;
       border:1px solid var(--line);
+      display:none;
     }
     .imgOut img{ width:100%; display:block; }
   </style>
@@ -239,32 +233,28 @@
   <div class="page">
     <div class="hero">
       <h1>SAK AI Studio Demo</h1>
-      <p>
-        AI platform demo for Voice, Chat & Image. This is an early-stage prototype designed for testing and evaluation.
-        Use the floating buttons to open Chat / Voice / Image.
-      </p>
+      <p>Use the floating buttons to open Chat / Voice / Image.</p>
       <div class="pill">✅ Deployed on Railway • ✅ Connected to Gemini API</div>
     </div>
 
     <div class="grid">
       <div class="card">
         <h3>AI Assistant</h3>
-        <p>Ask questions, brainstorm ideas, write content, and get structured answers with examples.</p>
+        <p>Ask questions, brainstorm ideas, write content, and get structured answers.</p>
       </div>
       <div class="card">
         <h3>Voice AI (TTS)</h3>
-        <p>Convert text into voice. Supports English + Khmer, and Male/Female.</p>
+        <p>English + Khmer + Male/Female selector.</p>
       </div>
       <div class="card">
         <h3>Image Generator</h3>
-        <p>Generate images from text prompts using Gemini Image.</p>
+        <p>Generate images from text prompts using Gemini image endpoint.</p>
       </div>
     </div>
   </div>
 
   <!-- Floating buttons -->
   <div class="fabCol">
-    <!-- Image -->
     <button class="fab small" id="fabImage" aria-label="Open Image">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M4 6.5C4 5.12 5.12 4 6.5 4h11C18.88 4 20 5.12 20 6.5v11c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 20 4 18.88 4 17.5v-11Z" stroke="white" stroke-width="1.8"/>
@@ -273,7 +263,6 @@
       </svg>
     </button>
 
-    <!-- Voice -->
     <button class="fab small" id="fabVoice" aria-label="Open Voice">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3Z" stroke="white" stroke-width="1.8"/>
@@ -282,7 +271,6 @@
       </svg>
     </button>
 
-    <!-- Chat -->
     <button class="fab" id="fabChat" aria-label="Open chat">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8C20 14.88 18.88 16 17.5 16H9l-4.3 3.2c-.5.37-1.2 0-1.2-.62V5.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
@@ -342,60 +330,54 @@
   </div>
 
   <script>
-    const chat = document.getElementById("chat");
-    const closeChat = document.getElementById("closeChat");
-    const chatBody = document.getElementById("chatBody");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("sendBtn");
-    const answerLen = document.getElementById("answerLen");
-    const memoryMode = document.getElementById("memoryMode");
-    const clearAll = document.getElementById("clearAll");
-    const hint = document.getElementById("hint");
-    const chatFooter = document.getElementById("chatFooter");
+    // ---------- ELEMENTS ----------
+    var chat = document.getElementById("chat");
+    var closeChat = document.getElementById("closeChat");
+    var chatBody = document.getElementById("chatBody");
+    var input = document.getElementById("input");
+    var sendBtn = document.getElementById("sendBtn");
+    var answerLen = document.getElementById("answerLen");
+    var memoryMode = document.getElementById("memoryMode");
+    var clearAll = document.getElementById("clearAll");
+    var hint = document.getElementById("hint");
+    var chatFooter = document.getElementById("chatFooter");
 
-    const tabChat = document.getElementById("tabChat");
-    const tabVoice = document.getElementById("tabVoice");
-    const tabImage = document.getElementById("tabImage");
+    var tabChat = document.getElementById("tabChat");
+    var tabVoice = document.getElementById("tabVoice");
+    var tabImage = document.getElementById("tabImage");
 
-    const fabChat = document.getElementById("fabChat");
-    const fabVoice = document.getElementById("fabVoice");
-    const fabImage = document.getElementById("fabImage");
+    var fabChat = document.getElementById("fabChat");
+    var fabVoice = document.getElementById("fabVoice");
+    var fabImage = document.getElementById("fabImage");
 
-    let activeTab = "chat";
-    let history = []; // chat memory (frontend)
+    var activeTab = "chat";
+    var history = [];
 
-    function openChat(tab = "chat") {
+    function openChat(tab) {
       chat.classList.add("open");
-      switchTab(tab);
-      setTimeout(() => input.focus(), 80);
+      switchTab(tab || "chat");
+      setTimeout(function(){ input && input.focus(); }, 80);
     }
     function closeChatPopup() { chat.classList.remove("open"); }
 
-    fabChat.addEventListener("click", () => openChat("chat"));
-    fabVoice.addEventListener("click", () => openChat("voice"));
-    fabImage.addEventListener("click", () => openChat("image"));
+    fabChat.addEventListener("click", function(){ openChat("chat"); });
+    fabVoice.addEventListener("click", function(){ openChat("voice"); });
+    fabImage.addEventListener("click", function(){ openChat("image"); });
     closeChat.addEventListener("click", closeChatPopup);
 
-    function scrollToBottom() { chatBody.scrollTop = chatBody.scrollHeight; }
+    function scrollToBottom(){ chatBody.scrollTop = chatBody.scrollHeight; }
 
-    function setActive(btn) {
-      [tabChat, tabVoice, tabImage].forEach(b => b.classList.remove("active"));
+    function setActive(btn){
+      tabChat.classList.remove("active");
+      tabVoice.classList.remove("active");
+      tabImage.classList.remove("active");
       btn.classList.add("active");
     }
 
-    function buildPrompt(userText) {
-      const len = answerLen.value;
-      let styleRule = "";
-      if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
-      if (len === "medium") styleRule = "Answer clearly with bullets/steps and one example.";
-      if (len === "long") styleRule = "Answer in detail with sections, steps, and multiple examples.";
-      return `Please follow: ${styleRule}\n\nUser: ${userText}`;
-    }
-
-    function addMessage(role, text) {
-      const row = document.createElement("div");
+    function addMessage(role, text){
+      var row = document.createElement("div");
       row.className = "msgRow " + (role === "user" ? "user" : "assistant");
-      const bubble = document.createElement("div");
+      var bubble = document.createElement("div");
       bubble.className = "bubble";
       bubble.textContent = text;
       row.appendChild(bubble);
@@ -403,13 +385,13 @@
       scrollToBottom();
     }
 
-    function addTyping() {
-      const row = document.createElement("div");
+    function addTyping(){
+      var row = document.createElement("div");
       row.className = "msgRow assistant";
       row.id = "typingRow";
-      const bubble = document.createElement("div");
+      var bubble = document.createElement("div");
       bubble.className = "bubble";
-      const typing = document.createElement("div");
+      var typing = document.createElement("div");
       typing.className = "typing";
       typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
       bubble.appendChild(typing);
@@ -417,54 +399,62 @@
       chatBody.appendChild(row);
       scrollToBottom();
     }
-    function removeTyping() {
-      const row = document.getElementById("typingRow");
+    function removeTyping(){
+      var row = document.getElementById("typingRow");
       if (row) row.remove();
     }
 
-    async function safeJsonFetch(url, options) {
-      const r = await fetch(url, options);
-      const ct = r.headers.get("content-type") || "";
-      const text = await r.text();
-      if (!ct.includes("application/json")) {
-        // This prevents: Unexpected token '<' ...
-        throw new Error("Server returned non-JSON. (Maybe route missing or server error)\n" + text.slice(0,120));
+    async function safeJsonFetch(url, options){
+      var r = await fetch(url, options);
+      var ct = r.headers.get("content-type") || "";
+      var txt = await r.text();
+      if (ct.indexOf("application/json") === -1) {
+        throw new Error("Server returned non-JSON: " + txt.slice(0,120));
       }
-      const data = JSON.parse(text);
-      if (!r.ok || data?.ok === false) {
-        throw new Error(data?.error || data?.reply || ("Request failed: " + r.status));
+      var data = JSON.parse(txt);
+      if (!r.ok || data.ok === false) {
+        throw new Error(data.error || data.reply || ("Request failed: " + r.status));
       }
       return data;
     }
 
-    async function sendChat() {
-      const raw = input.value.trim();
+    function buildPrompt(userText){
+      var len = answerLen.value;
+      var styleRule = "";
+      if (len === "short") styleRule = "Answer concisely in 3-6 sentences.";
+      if (len === "medium") styleRule = "Answer clearly with bullets/steps and one example.";
+      if (len === "long") styleRule = "Answer in detail with sections, steps, and multiple examples.";
+      return "Please follow: " + styleRule + "\n\nUser: " + userText;
+    }
+
+    async function sendChat(){
+      var raw = (input.value || "").trim();
       if (!raw) return;
 
       input.value = "";
       sendBtn.disabled = true;
 
       addMessage("user", raw);
-      history.push({ role: "user", text: raw });
+      history.push({ role:"user", text: raw });
       addTyping();
 
       try {
-        const payload = {
+        var payload = {
           message: buildPrompt(raw),
           history: (memoryMode.value === "on") ? history.slice(-12) : []
         };
 
-        const data = await safeJsonFetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        var data = await safeJsonFetch("/chat", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
           body: JSON.stringify(payload)
         });
 
-        const reply = String(data.reply || "No response");
+        var reply = String(data.reply || "No response");
         removeTyping();
         addMessage("assistant", reply);
-        history.push({ role: "assistant", text: reply });
-      } catch (e) {
+        history.push({ role:"assistant", text: reply });
+      } catch(e){
         removeTyping();
         addMessage("assistant", "Error: " + e.message);
       } finally {
@@ -473,11 +463,11 @@
       }
     }
 
-    sendBtn.addEventListener("click", () => {
+    sendBtn.addEventListener("click", function(){
       if (activeTab === "chat") sendChat();
     });
 
-    input.addEventListener("keydown", (e) => {
+    input.addEventListener("keydown", function(e){
       if (activeTab !== "chat") return;
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -485,63 +475,94 @@
       }
     });
 
-    // -------- VOICE UI --------
-    let voicesCache = [];
-    function voicePanelHtml() {
-      return `
-        <div class="panel">
-          <h3>Voice AI (Text-to-Speech)</h3>
-          <p>Type text → generate voice → play audio. (English + Khmer, Male/Female)</p>
+    // ---------- RENDER VOICE PANEL (WITH SELECTORS) ----------
+    function renderVoicePanel(){
+      chatBody.innerHTML = "";
 
-          <div class="row">
-            <div class="field">
-              <label>Language</label>
-              <select id="ttsLang">
-                <option value="en-US">English (en-US)</option>
-                <option value="km-KH">Khmer (km-KH)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Gender</label>
-              <select id="ttsGender">
-                <option value="FEMALE" selected>Female</option>
-                <option value="MALE">Male</option>
-              </select>
-            </div>
-          </div>
+      var wrap = document.createElement("div");
+      wrap.className = "panel";
 
-          <div class="row">
-            <div class="field">
-              <label>Text</label>
-              <input id="ttsText" placeholder="Type text here..." value="Hello! I'm SAK AI Studio assistant." />
-            </div>
-          </div>
+      var h3 = document.createElement("h3");
+      h3.textContent = "Voice AI (Text-to-Speech)";
+      wrap.appendChild(h3);
 
-          <button class="btnBig" id="btnTts">Generate Voice</button>
-          <div class="statusBox" id="ttsStatus">Ready.</div>
-          <div class="statusBox" style="padding:12px;">
-            <audio id="ttsAudio" controls style="width:100%"></audio>
-          </div>
-        </div>
-      `;
+      var p = document.createElement("p");
+      p.textContent = "Choose Language + Gender → Generate Voice → Play audio.";
+      wrap.appendChild(p);
+
+      var row1 = document.createElement("div");
+      row1.className = "row";
+
+      var fLang = document.createElement("div");
+      fLang.className = "field";
+      fLang.innerHTML = '<label>Language</label>';
+      var selLang = document.createElement("select");
+      selLang.id = "ttsLang";
+      selLang.innerHTML =
+        '<option value="en-US">English (en-US)</option>' +
+        '<option value="km-KH">Khmer (km-KH)</option>';
+      fLang.appendChild(selLang);
+
+      var fGender = document.createElement("div");
+      fGender.className = "field";
+      fGender.innerHTML = '<label>Gender</label>';
+      var selGender = document.createElement("select");
+      selGender.id = "ttsGender";
+      selGender.innerHTML =
+        '<option value="FEMALE" selected>Female</option>' +
+        '<option value="MALE">Male</option>';
+      fGender.appendChild(selGender);
+
+      row1.appendChild(fLang);
+      row1.appendChild(fGender);
+      wrap.appendChild(row1);
+
+      var row2 = document.createElement("div");
+      row2.className = "row";
+      var fText = document.createElement("div");
+      fText.className = "field";
+      fText.innerHTML = '<label>Text</label>';
+      var inText = document.createElement("input");
+      inText.id = "ttsText";
+      inText.value = "Hello! I'm SAK AI Studio assistant.";
+      fText.appendChild(inText);
+      row2.appendChild(fText);
+      wrap.appendChild(row2);
+
+      var btn = document.createElement("button");
+      btn.className = "btnBig";
+      btn.id = "btnTts";
+      btn.textContent = "Generate Voice";
+      wrap.appendChild(btn);
+
+      var status = document.createElement("div");
+      status.className = "statusBox";
+      status.id = "ttsStatus";
+      status.textContent = "Ready.";
+      wrap.appendChild(status);
+
+      var audioBox = document.createElement("div");
+      audioBox.className = "statusBox";
+      audioBox.style.padding = "12px";
+      var audio = document.createElement("audio");
+      audio.id = "ttsAudio";
+      audio.controls = true;
+      audio.style.width = "100%";
+      audioBox.appendChild(audio);
+      wrap.appendChild(audioBox);
+
+      chatBody.appendChild(wrap);
+
+      btn.addEventListener("click", runTts);
+      scrollToBottom();
     }
 
-    async function loadTtsVoices() {
-      try {
-        const data = await safeJsonFetch("/tts/voices", { method: "GET" });
-        voicesCache = data.voices || [];
-      } catch (e) {
-        // not fatal
-        voicesCache = [];
-      }
-    }
-
-    async function runTts() {
-      const lang = document.getElementById("ttsLang").value;
-      const gender = document.getElementById("ttsGender").value;
-      const text = document.getElementById("ttsText").value.trim();
-      const status = document.getElementById("ttsStatus");
-      const audio = document.getElementById("ttsAudio");
+    async function runTts(){
+      var lang = document.getElementById("ttsLang").value;
+      var gender = document.getElementById("ttsGender").value;
+      var text = (document.getElementById("ttsText").value || "").trim();
+      var status = document.getElementById("ttsStatus");
+      var audio = document.getElementById("ttsAudio");
 
       if (!text) { status.textContent = "Error: Please type text."; return; }
 
@@ -549,49 +570,80 @@
       audio.removeAttribute("src");
 
       try {
-        const data = await safeJsonFetch("/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, languageCode: lang, gender })
+        var data = await safeJsonFetch("/tts", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ text:text, languageCode: lang, gender: gender })
         });
 
-        const b64 = data.audioContent;
-        audio.src = "data:audio/mp3;base64," + b64;
-        status.textContent = "Done. Voice used: " + (data.voiceUsed || "Auto");
-        audio.play().catch(() => {});
-      } catch (e) {
+        audio.src = "data:audio/mp3;base64," + data.audioContent;
+        status.textContent = "Done. Voice: " + (data.voiceUsed || "Auto");
+        audio.play().catch(function(){});
+      } catch(e){
         status.textContent = "Error: " + e.message;
       }
     }
 
-    // -------- IMAGE UI --------
-    function imagePanelHtml() {
-      return `
-        <div class="panel">
-          <h3>Image Generator</h3>
-          <p>Type a prompt → generate image.</p>
+    // ---------- RENDER IMAGE PANEL ----------
+    function renderImagePanel(){
+      chatBody.innerHTML = "";
 
-          <div class="row">
-            <div class="field">
-              <label>Prompt</label>
-              <input id="imgPrompt" placeholder="e.g., cute chicken on a grill, cinematic lighting" />
-            </div>
-          </div>
+      var wrap = document.createElement("div");
+      wrap.className = "panel";
 
-          <button class="btnBig" id="btnImg">Generate Image</button>
-          <div class="statusBox" id="imgStatus">Ready.</div>
-          <div class="imgOut" id="imgOut" style="display:none;">
-            <img id="imgEl" alt="Generated image" />
-          </div>
-        </div>
-      `;
+      var h3 = document.createElement("h3");
+      h3.textContent = "Image Generator";
+      wrap.appendChild(h3);
+
+      var p = document.createElement("p");
+      p.textContent = "Type prompt → generate image.";
+      wrap.appendChild(p);
+
+      var row = document.createElement("div");
+      row.className = "row";
+
+      var f = document.createElement("div");
+      f.className = "field";
+      f.innerHTML = "<label>Prompt</label>";
+      var inp = document.createElement("input");
+      inp.id = "imgPrompt";
+      inp.placeholder = "e.g., cute chicken on a grill, cinematic lighting";
+      f.appendChild(inp);
+      row.appendChild(f);
+      wrap.appendChild(row);
+
+      var btn = document.createElement("button");
+      btn.className = "btnBig";
+      btn.id = "btnImg";
+      btn.textContent = "Generate Image";
+      wrap.appendChild(btn);
+
+      var status = document.createElement("div");
+      status.className = "statusBox";
+      status.id = "imgStatus";
+      status.textContent = "Ready.";
+      wrap.appendChild(status);
+
+      var out = document.createElement("div");
+      out.className = "imgOut";
+      out.id = "imgOut";
+      var img = document.createElement("img");
+      img.id = "imgEl";
+      img.alt = "Generated image";
+      out.appendChild(img);
+      wrap.appendChild(out);
+
+      chatBody.appendChild(wrap);
+
+      btn.addEventListener("click", runImage);
+      scrollToBottom();
     }
 
-    async function runImage() {
-      const prompt = document.getElementById("imgPrompt").value.trim();
-      const status = document.getElementById("imgStatus");
-      const out = document.getElementById("imgOut");
-      const img = document.getElementById("imgEl");
+    async function runImage(){
+      var prompt = (document.getElementById("imgPrompt").value || "").trim();
+      var status = document.getElementById("imgStatus");
+      var out = document.getElementById("imgOut");
+      var img = document.getElementById("imgEl");
 
       if (!prompt) { status.textContent = "Error: Please type a prompt."; return; }
 
@@ -600,68 +652,58 @@
       img.removeAttribute("src");
 
       try {
-        const data = await safeJsonFetch("/image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt })
+        var data = await safeJsonFetch("/image", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ prompt: prompt })
         });
 
         img.src = data.imageDataUrl;
         out.style.display = "block";
         status.textContent = "Done.";
-      } catch (e) {
+      } catch(e){
         status.textContent = "Error: " + e.message;
       }
     }
 
-    // -------- TAB SYSTEM --------
-    function renderTab() {
+    // ---------- TAB SWITCH ----------
+    function renderChatTab(){
       chatBody.innerHTML = "";
+      hint.style.display = "block";
+      chatFooter.style.display = "flex";
+      addMessage("assistant", "Hello! How can I help you today?");
+    }
 
-      if (activeTab === "chat") {
-        hint.style.display = "block";
-        chatFooter.style.display = "flex";
-        addMessage("assistant", "Hello! How can I help you today?");
+    function switchTab(tab){
+      activeTab = tab;
+
+      if (tab === "chat") { setActive(tabChat); }
+      if (tab === "voice") { setActive(tabVoice); }
+      if (tab === "image") { setActive(tabImage); }
+
+      if (tab === "chat") {
+        renderChatTab();
         return;
       }
 
       hint.style.display = "none";
       chatFooter.style.display = "none";
 
-      if (activeTab === "voice") {
-        chatBody.innerHTML = voicePanelHtml();
-        loadTtsVoices();
-        document.getElementById("btnTts").addEventListener("click", runTts);
-        return;
-      }
-
-      if (activeTab === "image") {
-        chatBody.innerHTML = imagePanelHtml();
-        document.getElementById("btnImg").addEventListener("click", runImage);
-        return;
-      }
+      if (tab === "voice") renderVoicePanel();
+      if (tab === "image") renderImagePanel();
     }
 
-    function switchTab(tab) {
-      activeTab = tab;
-      if (tab === "chat") setActive(tabChat);
-      if (tab === "voice") setActive(tabVoice);
-      if (tab === "image") setActive(tabImage);
-      renderTab();
-      scrollToBottom();
-    }
+    tabChat.addEventListener("click", function(){ switchTab("chat"); });
+    tabVoice.addEventListener("click", function(){ switchTab("voice"); });
+    tabImage.addEventListener("click", function(){ switchTab("image"); });
 
-    tabChat.addEventListener("click", () => switchTab("chat"));
-    tabVoice.addEventListener("click", () => switchTab("voice"));
-    tabImage.addEventListener("click", () => switchTab("image"));
-
-    clearAll.addEventListener("click", () => {
+    clearAll.addEventListener("click", function(){
       history = [];
-      renderTab();
+      switchTab(activeTab);
     });
 
     // Start
-    renderTab();
+    switchTab("chat");
   </script>
 </body>
 </html>
