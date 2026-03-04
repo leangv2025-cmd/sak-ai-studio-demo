@@ -1,25 +1,63 @@
-# sak-ai-studio-demo
-SAK AI Studio demo platform for voice, chat, and image AI tools.
-# SAK AI Studio Demo
+# 🚀 Sak AI Studio Demo
 
-This repository contains the demo platform for SAK AI Studio.
+Sak AI Studio Demo is an open-source AI platform prototype that integrates multiple AI capabilities into a unified interface.
 
-SAK AI Studio is an AI platform that provides tools for:
-- AI Assistant (chat)
-- Voice AI (text-to-speech)
-- Image generation
+## 🌟 Overview
 
-This demo showcases the user interface and basic structure of the platform.
-It is designed as an early-stage startup demo for testing and presentation.
+This project demonstrates how creators and developers can access:
 
-## About SAK AI Studio
-SAK AI Studio is an early-stage AI startup building a unified workspace
-for creators, developers, and startups to generate content using AI.
+- 🗣️ Text-to-Speech (AI Voice Generation)
+- 💬 Conversational AI (Chat Assistant)
+- 🎨 AI Image Generation
+- ⚙️ Modular AI Workflow Structure
 
-The platform focuses on:
-- Voice generation
-- Conversational AI
-- Image generation
+The goal is to provide a clean UI foundation and extensible architecture for building AI-powered applications.
+
+---
+
+## 🧠 Vision
+
+Sak AI Studio aims to empower developers, startups, and content creators by providing an accessible multi-AI toolkit in one place.
+
+---
+
+## ✨ Features
+
+- Unified AI interface
+- Scalable front-end structure
+- Ready for API integrations (Claude, OpenAI, ElevenLabs, etc.)
+- Designed for future SaaS deployment
+
+---
+
+## 🛠 Tech Stack
+
+- Node.js
+- Modern Frontend UI
+- REST API Integration Structure
+
+---
+
+## 🚧 Roadmap
+
+- [ ] Claude API Integration
+- [ ] Advanced Prompt Optimization
+- [ ] Multi-modal Workflow (Voice + Chat + Image)
+- [ ] Contributor Guidelines
+- [ ] Deployment Automation
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!  
+Feel free to fork the repository and submit pull requests.
+
+---
+
+## 📄 License
+
+MIT License
 
 ## Demo
 The demo will be deployed on Railway and connected to:
